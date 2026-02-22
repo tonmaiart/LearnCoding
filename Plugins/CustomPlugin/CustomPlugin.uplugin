@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "CustomPlugin",
+	"Description": "Store all helpful tools.",
+	"Category": "Other",
+	"CreatedBy": "Natchapon Srisuk",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "CustomPlugin",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
+		}
+	]
+}
