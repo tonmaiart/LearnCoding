@@ -12,6 +12,12 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+#pragma region ProcessActionAlembicImporter
+
+	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
+
+
+#pragma endregion
 private:
 
 #pragma region ContentBrowserMenuExtention
@@ -44,5 +50,6 @@ private:
 	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
 
 #pragma endregion
+
 
 };

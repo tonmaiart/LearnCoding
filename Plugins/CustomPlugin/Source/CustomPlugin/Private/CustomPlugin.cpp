@@ -9,6 +9,7 @@
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
 
+
 #define LOCTEXT_NAMESPACE "FCustomPluginModule"
 
 void FCustomPluginModule::StartupModule()
@@ -220,6 +221,27 @@ TArray<TSharedPtr<FAssetData>> FCustomPluginModule::GetAllAssetDataUnderSelected
 
 
 	return AvaiableAssetData;
+}
+
+
+#pragma endregion
+
+#pragma region ProcessActionAlembicImporter
+
+bool FCustomPluginModule::DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete)
+{
+	TArray<FAssetData> AssetDataArray;
+	AssetDataArray.Add(AssetDataToDelete);
+
+	if (ObjectTools::DeleteAssets(AssetDataArray, true)>0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
 }
 
 
