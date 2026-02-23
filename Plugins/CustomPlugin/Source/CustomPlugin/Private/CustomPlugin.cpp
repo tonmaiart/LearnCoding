@@ -7,6 +7,7 @@
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "SlateWidgets/AlembicImporterWidget.h"
 
 #define LOCTEXT_NAMESPACE "FCustomPluginModule"
 
@@ -183,9 +184,42 @@ void FCustomPluginModule::RegisterAlembicImporter()
 		.SetDisplayName(FText::FromString(TEXT("AlembicImporter")));
 }
 
-TSharedRef<SDockTab> FCustomPluginModule::OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArg)
+TSharedRef<SDockTab> FCustomPluginModule::OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	return SNew(SDockTab).TabRole(ETabRole::NomadTab);
+	return SNew(SDockTab).TabRole(ETabRole::PanelTab)
+		[
+			SNew(SAlembicImporterWidgetTab)
+				.AssetDataToStore(GetAllAssetDataUnderSelectedFolder())
+		]
+		;
+}
+
+TArray<TSharedPtr<FAssetData>> FCustomPluginModule::GetAllAssetDataUnderSelectedFolder()
+{
+	TArray<TSharedPtr<FAssetData>> AvaiableAssetData;
+
+	TArray<FString> AssetsPathNames = UEditorAssetLibrary::ListAssets(FolderPathsSelected[0]);
+	
+	// Iterate Each Asset Paths
+	for (const FString& AssetPathName : AssetsPathNames)
+	{
+		//Check Valid Folder
+		if (AssetPathName.Contains(TEXT("Developers")) ||
+			AssetPathName.Contains(TEXT("Collections")) ||
+			AssetPathName.Contains(TEXT("__ExternalActors__")) ||
+			AssetPathName.Contains(TEXT("__ExternalObjects__")))
+		{
+			continue;
+		}
+
+		const FAssetData Data = UEditorAssetLibrary::FindAssetData(AssetPathName);
+
+		AvaiableAssetData.Add(MakeShared<FAssetData>(Data));
+
+	}
+
+
+	return AvaiableAssetData;
 }
 
 

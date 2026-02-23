@@ -39,8 +39,10 @@ private:
 #pragma region CustomEditor
 	void  RegisterAlembicImporter();
 
-	TSharedRef<SDockTab> OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArg);
+	TSharedRef<SDockTab> OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArgs);
 	
+	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
+
 #pragma endregion
 
 };

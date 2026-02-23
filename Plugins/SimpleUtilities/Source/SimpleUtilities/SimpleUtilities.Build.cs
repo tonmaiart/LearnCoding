@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CustomPlugin : ModuleRules
+public class SimpleUtilities : ModuleRules
 {
-	public CustomPlugin(ReadOnlyTargetRules Target) : base(Target)
+	public SimpleUtilities(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -13,46 +13,42 @@ public class CustomPlugin : ModuleRules
 				// ... add public include paths required here ...
 			}
 			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
+
+
+        PrivateIncludePaths.AddRange(
+            new string[] {
                 System.IO.Path.GetFullPath(Target.RelativeEnginePath)+"Source/Editor/Blutility/Private"
             }
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
+            );
+
+
+        PublicDependencyModuleNames.AddRange(
+            new string[]
+            {
                 "ContentBrowser",
                 "AssetRegistry",
                 "Core",
                 "Blutility",
-				"EditorScriptingUtilities",
-				"UnrealEd",
-                "SimpleUtilities",
-				"InputCore"
+                "EditorScriptingUtilities",
+                "UnrealEd"
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
-			
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
-                "EditorScriptingUtilities",
 
+
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "CoreUObject",
+                "Engine",
+                "Slate",
+                "SlateCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
+
+
+        DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
 				// ... add any modules that your module loads dynamically here ...
