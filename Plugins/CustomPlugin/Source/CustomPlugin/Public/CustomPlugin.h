@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
+#include "GenericPlatform/GenericPlatformFile.h"
 
 class FCustomPluginModule : public IModuleInterface
 {
@@ -48,6 +49,8 @@ private:
 	TSharedRef<SDockTab> OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArgs);
 	
 	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
+
+	TArray<FString> GetDirectoryContent(FString DirectoryPath);
 
 #pragma endregion
 

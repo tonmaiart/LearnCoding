@@ -8,7 +8,9 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
-
+//#include <iostream>
+//#include <filesystem>
+#include "GenericPlatform/GenericPlatformFile.h"
 
 #define LOCTEXT_NAMESPACE "FCustomPluginModule"
 
@@ -39,6 +41,17 @@ TSharedRef<FExtender> FCustomPluginModule::CustomCBMenuExtender(const TArray<FSt
 {
 	TSharedRef<FExtender> MenuExtender(new FExtender());
 
+	 //Print Path of given folder 
+	FString ShotRootPath = TEXT("G:\\My Drive\\Projects\\KafkaProj\\publish\\Shot");
+
+	TArray<FString> AllFolder = GetDirectoryContent(ShotRootPath);
+
+	for (const FString& Item : AllFolder)
+	{
+		DebugHeader::Print(TEXT("Found - ") + Item, FColor::White);
+	}
+
+	// Check for selection
 	if (SelectedPaths.Num() > 0)
 	{
 		MenuExtender->AddMenuExtension(FName("Delete"),
@@ -221,6 +234,32 @@ TArray<TSharedPtr<FAssetData>> FCustomPluginModule::GetAllAssetDataUnderSelected
 
 
 	return AvaiableAssetData;
+}
+
+TArray<FString> FCustomPluginModule::GetDirectoryContent(FString DirectoryPath)
+{
+	// Prepare the output array
+	TArray<FString> FoundList;
+
+	// Define the visitor
+	struct FLocalVisitor : public IPlatformFile::FDirectoryVisitor
+	{
+		TArray<FString>& OutArray;
+		FLocalVisitor(TArray<FString>& InArray) : OutArray(InArray) {}
+
+		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
+		{
+			OutArray.Add(FilenameOrDirectory);
+			return true;
+		}
+	};
+
+	// Execute Search
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	FLocalVisitor Visitor(FoundList);
+	PlatformFile.IterateDirectory(*DirectoryPath, Visitor);
+
+	return FoundList;
 }
 
 
