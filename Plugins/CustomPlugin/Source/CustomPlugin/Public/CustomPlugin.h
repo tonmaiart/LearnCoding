@@ -4,10 +4,12 @@
 
 #include "Modules/ModuleManager.h"
 #include "GenericPlatform/GenericPlatformFile.h"
+#include "SlateWidgets/ShotReader.h"
 
 class FCustomPluginModule : public IModuleInterface
 {
 public:
+	FString ShotRootPath = "C:\\TestShot";
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
@@ -41,18 +43,21 @@ private:
 
 #pragma endregion
 
-#pragma region CustomEditor
+#pragma region Utilites
+	TArray<FString> GetDirectoryContent(FString DirectoryPath);
+	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
+#pragma endregion
+
+#pragma region AlembicImporter
 	void RegisterAlembicImporter();
 	TSharedRef<SDockTab> OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArgs);
-	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
-	TArray<FString> GetDirectoryContent(FString DirectoryPath);
-
 #pragma endregion
 
 #pragma region ShotReader
 	void RegisterShotReader();
 	TSharedRef<SDockTab> OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs);
-
+	TArray<TSharedRef<FShotData>> GetShotData(); // Use For Get All Need Data for update shot
+	
 #pragma endregion
 
 };

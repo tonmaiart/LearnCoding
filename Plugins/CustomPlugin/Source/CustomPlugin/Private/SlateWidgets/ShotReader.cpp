@@ -3,7 +3,11 @@
 
 #include "SlateWidgets/ShotReader.h"
 #include "DebugHeader.h"
+//#include "ShotReader.h"
 
+#pragma region ConstructWidget
+
+// Main Construct Function
 void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 {
 	// Can Use Keyboard for controlling
@@ -21,7 +25,7 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 			// Create Vertical Box
 			SNew(SVerticalBox)
 				
-				// Head Box
+				// Title Box Name
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
@@ -32,5 +36,37 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 						.ColorAndOpacity(FColor::White)
 
 				]
+
+				// SListView
+				+ SVerticalBox::Slot()
+				[
+					SShotReaderWidgetTab::ConstructAssetListView()
+				]
 		];
 }
+
+
+TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAssetListView()
+{
+
+	//return SNew(SListView<TSharedPtr<FShotData>>);
+
+	return SNew(SListView<TSharedPtr<FShotData>>)
+		.ItemHeight(24.f)
+		.ListItemsSource(&ShotDataList)
+		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList);
+
+}
+
+TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	FString ShotMainName = ShotDataStruct->ShotMainName;
+
+	return SNew(STableRow<TSharedPtr<FShotData>>, OwnerTable)
+		[
+
+			SNew(STextBlock).Text(FText::FromString(ShotMainName))
+		];
+}
+
+#pragma endregion

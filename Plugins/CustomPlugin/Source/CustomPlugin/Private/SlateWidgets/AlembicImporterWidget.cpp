@@ -2,12 +2,10 @@
 
 #include "Modules/ModuleManager.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
-#include "SlateWidgets/ShotReader.h"
 #include "Widgets/Input/SSlider.h"
 #include "SlateBasics.h"
 #include "DebugHeader.h"
 #include "CustomPlugin.h"
-//#include "AlembicImporterWidget.h"
 
 void SAlembicImporterWidgetTab::Construct(const FArguments& InArgs)
 {
@@ -67,7 +65,7 @@ void SAlembicImporterWidgetTab::Construct(const FArguments& InArgs)
 		];
 
 
-}
+}	
 
 TSharedRef<SListView<TSharedPtr<FAssetData>>> SAlembicImporterWidgetTab::ConstructAssetListView()
 {
@@ -89,7 +87,7 @@ void SAlembicImporterWidgetTab::RefreshAssetListView()
 }
 
 TSharedRef<ITableRow> SAlembicImporterWidgetTab::OnGenerateRowForList(TSharedPtr<FAssetData> AssetDataToDisplay,
-	const TSharedRef<STableViewBase>& OwnerTable)
+	const TSharedRef<STableViewBase>& OwnerTable)	
 {
 	// Return if Input Data is Valid
 	if (!AssetDataToDisplay.IsValid()) return SNew(STableRow < TSharedPtr <FAssetData>>, OwnerTable);

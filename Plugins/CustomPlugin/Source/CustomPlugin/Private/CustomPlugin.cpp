@@ -9,6 +9,7 @@
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
 #include "SlateWidgets/ShotReader.h"
+#include "Misc/Paths.h"
 
 //#include <iostream>
 //#include <filesystem>
@@ -42,16 +43,6 @@ void FCustomPluginModule::InitCBMenuExtention()
 TSharedRef<FExtender> FCustomPluginModule::CustomCBMenuExtender(const TArray<FString>& SelectedPaths)
 {
 	TSharedRef<FExtender> MenuExtender(new FExtender());
-
-	 //Print Path of given folder 
-	FString ShotRootPath = TEXT("G:\\My Drive\\Projects\\KafkaProj\\publish\\Shot");
-
-	TArray<FString> AllFolder = GetDirectoryContent(ShotRootPath);
-
-	for (const FString& Item : AllFolder)
-	{
-		DebugHeader::Print(TEXT("Found - ") + Item, FColor::White);
-	}
 
 	// Check for selection
 	if (SelectedPaths.Num() > 0)
@@ -316,12 +307,76 @@ void FCustomPluginModule::RegisterShotReader()
 	
 }
 
+TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
+{
+	DebugHeader::Print("Get Shot Data is Run");
+
+	TArray<FString>DirectoryContent = GetDirectoryContent(ShotRootPath);
+	TArray<TSharedRef<FShotData>> ResultShotData;
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	TArray<FString> ShotListPathList;
+
+	// loop each shot main name to get shot main path
+	for (const FString& ShotMainName : DirectoryContent)
+	{
+		FString ShotMainDirPath = FPaths::Combine(ShotRootPath, ShotMainName);
+
+		// continue if it is not directory
+		if (!PlatformFile.DirectoryExists(*ShotMainDirPath)) continue;
+
+		// loop each shot name
+		TArray<FString> ShotSubDirList = GetDirectoryContent(ShotMainDirPath);
+		
+		// Add Shot List Path
+		for (const FString ShotSubName : ShotSubDirList)
+		{
+			FString ShotSubPath = FPaths::Combine(ShotMainDirPath, ShotSubName);
+
+			if (PlatformFile.DirectoryExists(*ShotSubPath))
+			{
+				ShotListPathList.Add(ShotSubPath);
+			}
+		}
+
+
+	}
+
+	TArray<TSharedRef<FShotData>> ShotDataListResult;
+
+	// loop for each shot list name to get shot list path
+	for (const FString& ShotListPath : ShotListPathList)
+	{
+		TArray<FString> ShotFileList = GetDirectoryContent(ShotListPath);
+
+		for (const FString& ShotFile : ShotFileList)
+		{
+			//Create FShotData
+
+			if (PlatformFile.FileExists(*ShotFile))
+			{
+				TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
+				CurrentShotData->ShotMainName = ShotFile;
+				
+				ShotDataListResult.Add(CurrentShotData);
+			}
+
+		}
+
+	}
+
+
+	return ShotDataListResult;
+}
+
 TSharedRef<SDockTab> FCustomPluginModule::OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs)
 {
+	
+
 	return SNew(SDockTab)
 		.TabRole(ETabRole::NomadTab)
 		[
 			SNew(SShotReaderWidgetTab)
+				.ShotDataList(FCustomPluginModule::GetShotData())
 		];
 }
 
