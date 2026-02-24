@@ -7,7 +7,7 @@
 namespace DebugHeader
 {
 
-	static void Print(const FString& Message, const FColor& Color)
+	static void Print(const FString& Message, const FColor& Color = FColor::White)
 	{
 		if (GEngine)
 		{

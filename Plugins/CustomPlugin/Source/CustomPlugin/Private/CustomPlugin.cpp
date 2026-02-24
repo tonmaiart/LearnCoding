@@ -8,6 +8,8 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
+#include "SlateWidgets/ShotReader.h"
+
 //#include <iostream>
 //#include <filesystem>
 #include "GenericPlatform/GenericPlatformFile.h"
@@ -20,6 +22,7 @@ void FCustomPluginModule::StartupModule()
 	
 	InitCBMenuExtention();
 	RegisterAlembicImporter();
+	RegisterShotReader();
 }
 
 #pragma region ContentBrowserMenuExtention
@@ -33,7 +36,6 @@ void FCustomPluginModule::InitCBMenuExtention()
 	ContentBrowserModuleMenuExtenders.Add(FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FCustomPluginModule::CustomCBMenuExtender));
 	ContentBrowserModuleMenuExtenders.Add(FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FCustomPluginModule::OnRightClick));
 
-	
 
 }
 
@@ -92,6 +94,15 @@ void FCustomPluginModule::AddCBMenuEntry(FMenuBuilder& MenuBuilder)
 		FSlateIcon(),
 		FExecuteAction::CreateRaw(this, &FCustomPluginModule::OnAlembicImporter)
 	);
+
+	MenuBuilder.AddMenuEntry
+	(
+		FText::FromString(TEXT("Shot Reader")),
+		FText::FromString(TEXT("Check new version of animation / camera file in content directory to update.")),
+		FSlateIcon(),
+		FExecuteAction::CreateRaw(this, &FCustomPluginModule::OnShotReader)
+	);
+
 
 }
 
@@ -188,14 +199,23 @@ void FCustomPluginModule::OnAlembicImporter()
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("AlembicImporter"));
 }
 
+void FCustomPluginModule::OnShotReader()
+{
+	DebugHeader::Print(TEXT("Launching Shot Reader UI."), FColor::White);
+	FGlobalTabmanager::Get()->TryInvokeTab(FName("ShotReader"));
+}
+
+
 #pragma endregion
 
 #pragma region CustomEditor
 void FCustomPluginModule::RegisterAlembicImporter()
 {
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AlembicImporter"),
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
+		FName("AlembicImporter"),
 		FOnSpawnTab::CreateRaw(this, &FCustomPluginModule::OnSpawnAlembicImporterTab))
-		.SetDisplayName(FText::FromString(TEXT("AlembicImporter")));
+					.SetDisplayName(FText::FromString(TEXT("AlembicImporter"))
+					);
 }
 
 TSharedRef<SDockTab> FCustomPluginModule::OnSpawnAlembicImporterTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -286,6 +306,26 @@ bool FCustomPluginModule::DeleteSingleAssetForAssetList(const FAssetData& AssetD
 
 #pragma endregion
 
+#pragma region ShotReader
+void FCustomPluginModule::RegisterShotReader()
+{
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
+		FName("ShotReader"),
+		FOnSpawnTab::CreateRaw(this, &FCustomPluginModule::OnSpawnShotReader))
+		.SetDisplayName(FText::FromString(TEXT("ShotReader")));
+	
+}
+
+TSharedRef<SDockTab> FCustomPluginModule::OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs)
+{
+	return SNew(SDockTab)
+		.TabRole(ETabRole::NomadTab)
+		[
+			SNew(SShotReaderWidgetTab)
+		];
+}
+
+#pragma endregion
 void FCustomPluginModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,

@@ -2,6 +2,7 @@
 
 #include "Modules/ModuleManager.h"
 #include "SlateWidgets/AlembicImporterWidget.h"
+#include "SlateWidgets/ShotReader.h"
 #include "Widgets/Input/SSlider.h"
 #include "SlateBasics.h"
 #include "DebugHeader.h"
@@ -12,6 +13,8 @@ void SAlembicImporterWidgetTab::Construct(const FArguments& InArgs)
 {
 	bCanSupportFocus = true;
 	StoredAssetData = InArgs._AssetDataToStore;
+
+	DebugHeader::Print("Construct the Alembic Importer Widget");
 
 	FSlateFontInfo TitleTextFont = GetEmbossedTextFont();
 	TitleTextFont.Size = 25;
