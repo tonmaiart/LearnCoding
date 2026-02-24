@@ -164,7 +164,7 @@ void FCustomPluginModule::OnFixUpRedirectors()
 	FARFilter Filter;
 	Filter.bRecursivePaths = true;
 	Filter.PackageNames.Emplace("/Game");
-	Filter.ClassNames.Emplace("ObjectRedirector");
+	Filter.ClassPaths.Emplace("ObjectRedirector");
 
 	TArray<FAssetData> OutRedirectors;
 	AssetRegistryModule.Get().GetAssets(Filter, OutRedirectors);

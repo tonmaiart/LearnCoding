@@ -70,7 +70,6 @@ void SAlembicImporterWidgetTab::Construct(const FArguments& InArgs)
 TSharedRef<SListView<TSharedPtr<FAssetData>>> SAlembicImporterWidgetTab::ConstructAssetListView()
 {
 	ConstructedAssetListView = SNew(SListView<TSharedPtr <FAssetData>>)
-		.ItemHeight(24.f)
 		.ListItemsSource(&StoredAssetData)
 		.OnGenerateRow(this, &SAlembicImporterWidgetTab::OnGenerateRowForList);
 

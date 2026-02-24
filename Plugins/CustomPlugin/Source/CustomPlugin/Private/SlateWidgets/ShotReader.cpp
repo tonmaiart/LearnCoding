@@ -54,7 +54,6 @@ TSharedRef<SListView<TSharedRef<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 	DebugHeader::Print("Construcing Asset List View");
 
 	return SNew(SListView<TSharedRef<FShotData>>)
-		.ItemHeight(24.f)
 		.ListItemsSource(&ShotDataList)
 		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList);
 
