@@ -11,7 +11,7 @@ namespace DebugHeader
 	{
 		if (GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 7.f, Color, Message);
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, Color, Message);
 		}
 	}
 

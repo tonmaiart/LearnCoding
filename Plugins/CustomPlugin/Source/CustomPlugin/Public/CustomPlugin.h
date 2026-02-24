@@ -44,7 +44,7 @@ private:
 #pragma endregion
 
 #pragma region Utilites
-	TArray<FString> GetDirectoryContent(FString DirectoryPath, bool GetDir = true, bool GetFile = true);
+	//TArray<FString> GetDirectoryContent(FString DirectoryPath, bool GetDir = true, bool GetFile = true);
 	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
 #pragma endregion
 

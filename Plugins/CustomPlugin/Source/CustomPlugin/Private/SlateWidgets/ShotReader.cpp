@@ -50,18 +50,42 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 TSharedRef<SListView<TSharedRef<FShotData>>> SShotReaderWidgetTab::ConstructAssetListView()
 {
 
+	// Create Header Row
+	TSharedRef<SHeaderRow> HeaderRow = SNew(SHeaderRow)
+
+		+ SHeaderRow::Column(FName("ShotName"))
+		.DefaultLabel(FText::FromString("Shot Name"))
+
+		+ SHeaderRow::Column(FName("LastestVersion"))
+		.DefaultLabel(FText::FromString("Lastest Version"))
+
+		+ SHeaderRow::Column(FName("CurrentVersion"))
+		.DefaultLabel(FText::FromString("Current Version"))
+
+		+ SHeaderRow::Column(FName("AssetName"))
+		.DefaultLabel(FText::FromString("Asset Name"))
+
+		+ SHeaderRow::Column(FName("ImportPath"))
+		.DefaultLabel(FText::FromString("Import Path"))
+		;
+
 	//return SNew(SListView<TSharedPtr<FShotData>>);
 	DebugHeader::Print("Construcing Asset List View");
 
 	return SNew(SListView<TSharedRef<FShotData>>)
 		.ListItemsSource(&ShotDataList)
-		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList);
+		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList)
+		.HeaderRow(HeaderRow)
+		;
 
 }
 
 TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedRef<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	FString ShotMainName = ShotDataStruct->ShotMainName;
+	FString ShotName = ShotDataStruct->ShotName;
+	int32 LastestVersion = ShotDataStruct->ShotVersion;
+
 	DebugHeader::Print("Generating Row Asset List" + ShotMainName);
 
 	TSharedRef<ITableRow> GeneratedRow = SNew(STableRow<TSharedRef<FShotData>>, OwnerTable)
@@ -79,7 +103,7 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedRef<F
 			+SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
 				[
-					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+					SNew(STextBlock).Text(FText::FromString(FString::FromInt(LastestVersion)))
 
 				]
 
@@ -87,7 +111,7 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedRef<F
 				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
 				[
-					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+					SNew(STextBlock).Text(FText::FromString(FString::FromInt(LastestVersion)))
 
 				]
 
@@ -99,6 +123,13 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedRef<F
 
 				]
 
+			// Last Version
+			+ SHorizontalBox::Slot()
+			.HAlign(HAlign_Left)
+			[
+				SNew(STextBlock).Text(FText::FromString(ShotMainName))
+
+			]
 		];
 	
 	return GeneratedRow;

@@ -10,6 +10,7 @@
 #include "SlateWidgets/AlembicImporterWidget.h"
 #include "SlateWidgets/ShotReader.h"
 #include "Misc/Paths.h"
+#include "SimpleUtilities.h"
 
 //#include <iostream>
 //#include <filesystem>
@@ -239,47 +240,6 @@ TArray<TSharedPtr<FAssetData>> FCustomPluginModule::GetAllAssetDataUnderSelected
 	return AvaiableAssetData;
 }
 
-TArray<FString> FCustomPluginModule::GetDirectoryContent(FString DirectoryPath,bool GetDir,bool GetFile)
-{
-	// Prepare the output array
-	TArray<FString> FoundList;
-	TArray<FString> ResultList;
-
-	// Define the visitor
-	struct FLocalVisitor : public IPlatformFile::FDirectoryVisitor
-	{
-		TArray<FString>& OutArray;
-		FLocalVisitor(TArray<FString>& InArray) : OutArray(InArray) {}
-
-		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
-		{
-			OutArray.Add(FilenameOrDirectory);
-			return true;
-		}
-	};
-
-	// Execute Search
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	FLocalVisitor Visitor(FoundList);
-	PlatformFile.IterateDirectory(*DirectoryPath, Visitor);
-
-	// Filter
-	for (const FString item : FoundList)
-	{
-		if (PlatformFile.DirectoryExists(*item) && GetDir == true)
-		{
-			ResultList.Add(item);
-		}
-		else if(PlatformFile.FileExists(*item) && GetFile == true)
-		{
-			ResultList.Add(item);
-		}
-	}
-
-	return ResultList;
-}
-
-
 #pragma endregion
 
 #pragma region ProcessActionAlembicImporter
@@ -299,8 +259,6 @@ bool FCustomPluginModule::DeleteSingleAssetForAssetList(const FAssetData& AssetD
 	}
 
 }
-
-
 #pragma endregion
 
 #pragma region ShotReader
@@ -318,14 +276,14 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	TArray<FString> ShotListPathList;
-	TArray<FString>DirectoryContent = GetDirectoryContent(ShotRootPath, true, false);
+	TArray<FString>DirectoryContent = Utility::GetDirectoryContent(ShotRootPath, true, false);
 
 	// loop each shot main name to get shot main path
 	for (const FString& ShotMainDirPath : DirectoryContent)
 	{
 		// loop each shot name
 		DebugHeader::Print("# Directory To Search : " + ShotMainDirPath);
-		TArray<FString> ShotSubDirList = GetDirectoryContent(ShotMainDirPath,true,false);
+		TArray<FString> ShotSubDirList = Utility::GetDirectoryContent(ShotMainDirPath,true,false);
 		ShotListPathList.Append(ShotSubDirList);
 
 		// Add Shot List Path
@@ -335,30 +293,46 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 		}
 	}
 
-
 	// loop for each shot list name to get shot list path
 	TArray<TSharedRef<FShotData>> ShotDataListResult;
 
 	for (const FString& ShotListPath : ShotListPathList)
 	{
-		TArray<FString> ShotSubList = GetDirectoryContent(ShotListPath,false,true);
+		// Get Lastest Version Folder
+		FString ShotListExtraPath = FPaths::Combine(ShotListPath,SubFolder);
+		Utility::FVersionResult LastestVersionData = Utility::GetLastestVersionFolder(ShotListExtraPath);
+		FString LastestVersionPath = LastestVersionData.Path;
+		int32 LastestVersion = LastestVersionData.Version;
+		
+		DebugHeader::Print("- Shot List Version Path : " + ShotListPath);
+		DebugHeader::Print("- Get Lastest Version Path : " + LastestVersionPath);
 
-		for (const FString& ShotFile : ShotSubList)
+		if (LastestVersionPath.IsEmpty())
 		{
-			FString ShotSubPathExtra = FPaths::Combine(ShotFile, SubFolder);
-			DebugHeader::Print("# Sub Directory To Search : " + ShotSubPathExtra);
+			continue; // Skip this folder because have no version folder detected
+		}
+
+		// Get File of given lastest path
+		TArray<FString> FileList = Utility::GetDirectoryContent(LastestVersionPath,false,true);
+
+		for (const FString& ShotFile : FileList)
+		{
+			FString FilePath = FPaths::Combine(ShotFile, SubFolder);
+			DebugHeader::Print("# Sub Directory To Search : " + FilePath);
 
 			//Create FShotData
 			TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
-			CurrentShotData->ShotMainName = ShotFile;
-
+			CurrentShotData->ShotMainName = FPaths::GetCleanFilename(ShotFile);;
+			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotFile);
+			CurrentShotData->LastestFilePath = FilePath;
 			DebugHeader::Print("- Detect File Anim - " + ShotFile);
 
 			ShotDataListResult.Add(CurrentShotData);
 		}
+
+		// 
+
 	}
-
-
 	return ShotDataListResult;
 }
 

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
-//#include "UObject/NoExportTypes.h"
 #include "ShotReader.generated.h"
 
 USTRUCT(BlueprintType) struct FShotData
@@ -14,6 +13,9 @@ USTRUCT(BlueprintType) struct FShotData
 	UPROPERTY() FString ShotMainName;
 	UPROPERTY() FString ShotName;
 	UPROPERTY() int32 ShotVersion;
+	UPROPERTY() FString LastestFilePath;
+	UPROPERTY() FString CurrentImportPath;
+
 	UPROPERTY() TArray<FString> ExternalFileNameList;
 	UPROPERTY() TMap<FString,FAssetData> CurrentAssetDataList;
 
