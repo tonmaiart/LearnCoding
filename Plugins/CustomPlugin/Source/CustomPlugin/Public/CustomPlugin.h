@@ -9,7 +9,8 @@
 class FCustomPluginModule : public IModuleInterface
 {
 public:
-	FString ShotRootPath = "C:\\TestShot";
+	FString ShotRootPath = "G:\\My Drive\\Projects\\KafkaProj\\publish\\Shot";
+	FString SubFolder = "Layout";
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
@@ -39,12 +40,11 @@ private:
 	
 	/* Extra Tools Function*/
 	void OnFixUpRedirectors();
-	TSharedRef<FExtender> OnRightClick(const TArray<FString>& SelectedPaths);
 
 #pragma endregion
 
 #pragma region Utilites
-	TArray<FString> GetDirectoryContent(FString DirectoryPath);
+	TArray<FString> GetDirectoryContent(FString DirectoryPath, bool GetDir = true, bool GetFile = true);
 	TArray<TSharedPtr<FAssetData>> GetAllAssetDataUnderSelectedFolder();
 #pragma endregion
 

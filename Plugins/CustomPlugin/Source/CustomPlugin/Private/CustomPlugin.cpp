@@ -35,14 +35,13 @@ void FCustomPluginModule::InitCBMenuExtention()
 	TArray<FContentBrowserMenuExtender_SelectedPaths>& ContentBrowserModuleMenuExtenders = ContentBrowserModule.GetAllPathViewContextMenuExtenders();
 
 	ContentBrowserModuleMenuExtenders.Add(FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FCustomPluginModule::CustomCBMenuExtender));
-	ContentBrowserModuleMenuExtenders.Add(FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FCustomPluginModule::OnRightClick));
 
 
 }
 
 TSharedRef<FExtender> FCustomPluginModule::CustomCBMenuExtender(const TArray<FString>& SelectedPaths)
 {
-	TSharedRef<FExtender> MenuExtender(new FExtender());
+	TSharedRef<FExtender> MenuExtender = MakeShareable(new FExtender());
 
 	// Check for selection
 	if (SelectedPaths.Num() > 0)
@@ -59,13 +58,6 @@ TSharedRef<FExtender> FCustomPluginModule::CustomCBMenuExtender(const TArray<FSt
 }
 
 
-
-TSharedRef<FExtender> FCustomPluginModule::OnRightClick(const TArray<FString>& SelectedPaths)
-{
-	DebugHeader::Print("Right Click Menu Show Up", FColor::White);
-
-	return MakeShareable(new FExtender());
-}
 
 void FCustomPluginModule::AddCBMenuEntry(FMenuBuilder& MenuBuilder)
 {
@@ -247,10 +239,11 @@ TArray<TSharedPtr<FAssetData>> FCustomPluginModule::GetAllAssetDataUnderSelected
 	return AvaiableAssetData;
 }
 
-TArray<FString> FCustomPluginModule::GetDirectoryContent(FString DirectoryPath)
+TArray<FString> FCustomPluginModule::GetDirectoryContent(FString DirectoryPath,bool GetDir,bool GetFile)
 {
 	// Prepare the output array
 	TArray<FString> FoundList;
+	TArray<FString> ResultList;
 
 	// Define the visitor
 	struct FLocalVisitor : public IPlatformFile::FDirectoryVisitor
@@ -270,7 +263,20 @@ TArray<FString> FCustomPluginModule::GetDirectoryContent(FString DirectoryPath)
 	FLocalVisitor Visitor(FoundList);
 	PlatformFile.IterateDirectory(*DirectoryPath, Visitor);
 
-	return FoundList;
+	// Filter
+	for (const FString item : FoundList)
+	{
+		if (PlatformFile.DirectoryExists(*item) && GetDir == true)
+		{
+			ResultList.Add(item);
+		}
+		else if(PlatformFile.FileExists(*item) && GetFile == true)
+		{
+			ResultList.Add(item);
+		}
+	}
+
+	return ResultList;
 }
 
 
@@ -309,81 +315,47 @@ void FCustomPluginModule::RegisterShotReader()
 
 TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 {
-	DebugHeader::Print("Get Shot Data is Run");
-
-	TArray<FString>DirectoryContent = GetDirectoryContent(ShotRootPath);
-	TArray<TSharedRef<FShotData>> ResultShotData;
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	TArray<FString> ShotListPathList;
 
+	TArray<FString> ShotListPathList;
+	TArray<FString>DirectoryContent = GetDirectoryContent(ShotRootPath, true, false);
 
 	// loop each shot main name to get shot main path
 	for (const FString& ShotMainDirPath : DirectoryContent)
 	{
-
-		//FString ShotMainDirPath = FPaths::Combine(ShotRootPath, ShotMainName);
-
-		// continue if it is not directory
-		bool Result = PlatformFile.DirectoryExists(*ShotMainDirPath);
-		FString ResultValue = Result ? TEXT("True") : TEXT("False");
-		DebugHeader::Print("Directory To Search" + ShotMainDirPath);
-		DebugHeader::Print("Result of search directory" + ResultValue);
-
-		if (PlatformFile.DirectoryExists(*ShotMainDirPath))
-		{
-			DebugHeader::Print("Found Main Path - " + ShotMainDirPath);
-		}
-		else
-		{
-			continue;
-		}
-
-
 		// loop each shot name
-		TArray<FString> ShotSubDirList = GetDirectoryContent(ShotMainDirPath);
-		
+		DebugHeader::Print("# Directory To Search : " + ShotMainDirPath);
+		TArray<FString> ShotSubDirList = GetDirectoryContent(ShotMainDirPath,true,false);
+		ShotListPathList.Append(ShotSubDirList);
+
 		// Add Shot List Path
 		for (const FString ShotSubPath : ShotSubDirList)
 		{
-
-			//FString ShotSubPath = FPaths::Combine(ShotMainDirPath, ShotSubName);
-
-
-			if (PlatformFile.DirectoryExists(*ShotSubPath))
-			{
-				ShotListPathList.Add(ShotSubPath);
-
-				DebugHeader::Print("Found Sub Path - " + ShotSubPath);
-
-			}
+			DebugHeader::Print("- Found Sub Dir - " + ShotSubPath);
 		}
-
-
 	}
 
-	TArray<TSharedRef<FShotData>> ShotDataListResult;
 
 	// loop for each shot list name to get shot list path
+	TArray<TSharedRef<FShotData>> ShotDataListResult;
+
 	for (const FString& ShotListPath : ShotListPathList)
 	{
-		TArray<FString> ShotFileList = GetDirectoryContent(ShotListPath);
+		TArray<FString> ShotSubList = GetDirectoryContent(ShotListPath,false,true);
 
-		for (const FString& ShotFile : ShotFileList)
+		for (const FString& ShotFile : ShotSubList)
 		{
+			FString ShotSubPathExtra = FPaths::Combine(ShotFile, SubFolder);
+			DebugHeader::Print("# Sub Directory To Search : " + ShotSubPathExtra);
+
 			//Create FShotData
+			TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
+			CurrentShotData->ShotMainName = ShotFile;
 
-			if (PlatformFile.FileExists(*ShotFile))
-			{
-				TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
-				CurrentShotData->ShotMainName = ShotFile;
-				
-				DebugHeader::Print("Found Fileeeeeee - " + ShotFile);
+			DebugHeader::Print("- Detect File Anim - " + ShotFile);
 
-				ShotDataListResult.Add(CurrentShotData);
-			}
-
+			ShotDataListResult.Add(CurrentShotData);
 		}
-
 	}
 
 

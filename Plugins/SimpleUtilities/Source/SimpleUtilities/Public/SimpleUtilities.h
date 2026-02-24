@@ -4,13 +4,14 @@
 
 #include "Modules/ModuleManager.h"
 
-class FSimpleUtilitiesModule : public IModuleInterface
+namespace Utility
+//{
+//	FString GetLastestVersionFolder(FString ParentPath)
+//	{
+//		TArray<>
+//	}
+//
+//}
+
 {
-public:
-
-	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
-
-	bool IsPathSecure(const FString& AssetPath);
-};
+}
