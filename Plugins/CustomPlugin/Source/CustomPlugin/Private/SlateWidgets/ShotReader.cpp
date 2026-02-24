@@ -12,6 +12,7 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 {
 	// Can Use Keyboard for controlling
 	bCanSupportFocus = true;
+	ShotDataList = InArgs._ShotDataList;
 
 	// Define
 	FSlateFontInfo TitleTextFont = GetEmbossedTextFont();
@@ -46,27 +47,62 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 }
 
 
-TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAssetListView()
+TSharedRef<SListView<TSharedRef<FShotData>>> SShotReaderWidgetTab::ConstructAssetListView()
 {
 
 	//return SNew(SListView<TSharedPtr<FShotData>>);
+	DebugHeader::Print("Construcing Asset List View");
 
-	return SNew(SListView<TSharedPtr<FShotData>>)
+	return SNew(SListView<TSharedRef<FShotData>>)
 		.ItemHeight(24.f)
 		.ListItemsSource(&ShotDataList)
 		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList);
 
 }
 
-TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedRef<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	FString ShotMainName = ShotDataStruct->ShotMainName;
+	DebugHeader::Print("Generating Row Asset List" + ShotMainName);
 
-	return SNew(STableRow<TSharedPtr<FShotData>>, OwnerTable)
+	TSharedRef<ITableRow> GeneratedRow = SNew(STableRow<TSharedRef<FShotData>>, OwnerTable)
 		[
+			SNew(SHorizontalBox)
+			
+			// Name
+			+SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+				]
 
-			SNew(STextBlock).Text(FText::FromString(ShotMainName))
+			// Path
+			+SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+
+				]
+
+			// Recent Version
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+
+				]
+
+			// Last Version
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+
+				]
+
 		];
+	
+	return GeneratedRow;
 }
 
 #pragma endregion

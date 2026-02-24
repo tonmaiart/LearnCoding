@@ -316,25 +316,45 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	TArray<FString> ShotListPathList;
 
+
 	// loop each shot main name to get shot main path
-	for (const FString& ShotMainName : DirectoryContent)
+	for (const FString& ShotMainDirPath : DirectoryContent)
 	{
-		FString ShotMainDirPath = FPaths::Combine(ShotRootPath, ShotMainName);
+
+		//FString ShotMainDirPath = FPaths::Combine(ShotRootPath, ShotMainName);
 
 		// continue if it is not directory
-		if (!PlatformFile.DirectoryExists(*ShotMainDirPath)) continue;
+		bool Result = PlatformFile.DirectoryExists(*ShotMainDirPath);
+		FString ResultValue = Result ? TEXT("True") : TEXT("False");
+		DebugHeader::Print("Directory To Search" + ShotMainDirPath);
+		DebugHeader::Print("Result of search directory" + ResultValue);
+
+		if (PlatformFile.DirectoryExists(*ShotMainDirPath))
+		{
+			DebugHeader::Print("Found Main Path - " + ShotMainDirPath);
+		}
+		else
+		{
+			continue;
+		}
+
 
 		// loop each shot name
 		TArray<FString> ShotSubDirList = GetDirectoryContent(ShotMainDirPath);
 		
 		// Add Shot List Path
-		for (const FString ShotSubName : ShotSubDirList)
+		for (const FString ShotSubPath : ShotSubDirList)
 		{
-			FString ShotSubPath = FPaths::Combine(ShotMainDirPath, ShotSubName);
+
+			//FString ShotSubPath = FPaths::Combine(ShotMainDirPath, ShotSubName);
+
 
 			if (PlatformFile.DirectoryExists(*ShotSubPath))
 			{
 				ShotListPathList.Add(ShotSubPath);
+
+				DebugHeader::Print("Found Sub Path - " + ShotSubPath);
+
 			}
 		}
 
@@ -357,6 +377,8 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 				TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
 				CurrentShotData->ShotMainName = ShotFile;
 				
+				DebugHeader::Print("Found Fileeeeeee - " + ShotFile);
+
 				ShotDataListResult.Add(CurrentShotData);
 			}
 

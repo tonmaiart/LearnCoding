@@ -32,13 +32,13 @@ private:
 
 public:
 
-TArray<TSharedPtr<FShotData>> ShotDataList;
+TArray<TSharedRef<FShotData>> ShotDataList;
 FString ShotRootPath;
 
 #pragma region ConstructWidget
 void Construct(const FArguments& InArgs);
-TSharedRef<SListView<TSharedPtr<FShotData>>> ConstructAssetListView();
-TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedPtr<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
+TSharedRef<SListView<TSharedRef<FShotData>>> ConstructAssetListView();
+TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedRef<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
 
 #pragma endregion
 };
