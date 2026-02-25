@@ -317,15 +317,13 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 		for (const FString& ShotFile : FileList)
 		{
-			FString FilePath = FPaths::Combine(ShotFile, SubFolder);
-			DebugHeader::Print("# Sub Directory To Search : " + FilePath);
 
 			//Create FShotData
 			TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
 			CurrentShotData->ShotMainName = FPaths::GetCleanFilename(ShotListPath);;
 			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotListPath);
 			CurrentShotData->AssetName = FPaths::GetBaseFilename(ShotFile);
-			CurrentShotData->LastestFilePath = FilePath;
+			CurrentShotData->LastestFilePath = ShotFile;
 			
 			DebugHeader::Print("- Detect File Anim - " + ShotFile);
 

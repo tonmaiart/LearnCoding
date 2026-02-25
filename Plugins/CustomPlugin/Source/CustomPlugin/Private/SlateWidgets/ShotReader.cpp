@@ -4,6 +4,7 @@
 #include "SlateWidgets/ShotReader.h"
 #include "DebugHeader.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "HAL/PlatformProcess.h"
 
 #pragma region ConstructWidget
 
@@ -56,43 +57,41 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 
 		+ SHeaderRow::Column(FName("ShotName"))
 		.DefaultLabel(FText::FromString("Shot Name"))
+		.FillWidth(.2f)
 
 		+ SHeaderRow::Column(FName("LastestVersion"))
 		.DefaultLabel(FText::FromString("Lastest Version"))
+		.FillWidth(.08f)
 
 		+ SHeaderRow::Column(FName("CurrentVersion"))
 		.DefaultLabel(FText::FromString("Current Version"))
+		.FillWidth(.08f)
 
 		+ SHeaderRow::Column(FName("AssetName"))
 		.DefaultLabel(FText::FromString("Asset Name"))
+		.FillWidth(.5f)
 
 		+ SHeaderRow::Column(FName("ImportPath"))
 		.DefaultLabel(FText::FromString("Import Path"))
+
 		;
 
 	DebugHeader::Print("Construcing Asset List View");
 
-	return SNew(SListView<TSharedPtr<FShotData>>)
+	ConstructedAssetListView = SNew(SListView<TSharedPtr<FShotData>>)
 		.ListItemsSource(&ShotDataList)
 		.OnGenerateRow(this, &SShotReaderWidgetTab::OnGeneratedRowAssetList)
 		.OnContextMenuOpening(this, &SShotReaderWidgetTab::OnGeneratedContextMenu)
 		.HeaderRow(HeaderRow)
 		;
+	
 
-	//return ConstructedAssetListView.ToSharedRef();
+	return ConstructedAssetListView.ToSharedRef();
 	
 }
 
 TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
 {
-	FString ShotMainName = ShotDataStruct->ShotMainName;
-	FString ShotName = ShotDataStruct->ShotName;
-	FString AssetName = ShotDataStruct->AssetName;
-
-	int32 LastestVersion = ShotDataStruct->ShotVersion;
-
-	DebugHeader::Print("Generating Row Asset List" + ShotMainName);
-
 	TSharedRef<ITableRow> GeneratedRow = SNew(STableRow<TSharedRef<FShotData>>, OwnerTable)
 		[
 			SNew(SHorizontalBox)
@@ -100,34 +99,34 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<F
 			+SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
 				[
-					SNew(STextBlock).Text(FText::FromString(ShotMainName))
+					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->ShotMainName))
 				]
 
 			+SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
 			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(LastestVersion)))
+				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->ShotVersion)))
 
 			]
 
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
 			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(LastestVersion)))
+				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->ShotVersion)))
 
 			]
 
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
 			[
-				SNew(STextBlock).Text(FText::FromString(AssetName))
+				SNew(STextBlock).Text(FText::FromString(ShotDataStruct->AssetName))
 
 			]
 
 			+ SHorizontalBox::Slot()
 			.HAlign(HAlign_Left)
 			[
-				SNew(STextBlock).Text(FText::FromString(ShotMainName))
+				SNew(STextBlock).Text(FText::FromString(ShotDataStruct->LastestFilePath))
 
 			]
 		];
@@ -139,16 +138,38 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
 
-	MenuBuilder.BeginSection("SectionName", FText::FromString("Options"));
+	MenuBuilder.BeginSection("SectionCommon", FText::FromString("Common"));
 
 	{
 
 		MenuBuilder.AddMenuEntry(
-			FText::FromString("Reimport File"),
+			FText::FromString("Import File"),
+			FText::FromString("Import file lastest version"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::ImportSelectedItem))
+		);
+
+		MenuBuilder.AddMenuEntry(
+			FText::FromString("Reimport File (Update)"),
 			FText::FromString("Reimport file to lastest version"),
 			FSlateIcon(),
 			FUIAction(FExecuteAction::CreateSP(this,&SShotReaderWidgetTab::ReimportSelectedItem))
-			);
+		);
+
+		MenuBuilder.AddMenuEntry(
+			FText::FromString("Browse File in File Explorer"),
+			FText::FromString("Import file lastest version"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseFileLocation))
+		);
+
+		MenuBuilder.AddMenuEntry(
+			FText::FromString("Browse Asset File in Content Browser"),
+			FText::FromString("Reimport file to lastest version"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseAssetLocation))
+		);
+
 
 	}
 
@@ -160,6 +181,38 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 void SShotReaderWidgetTab::ReimportSelectedItem()
 {
 	DebugHeader::Print("Reimport Clicked");
+}
+
+void SShotReaderWidgetTab::ImportSelectedItem()
+{
+	DebugHeader::Print("Import Selected Clicked");
+
+}
+
+void SShotReaderWidgetTab::BrowseFileLocation()
+{
+	TArray<TSharedPtr<FShotData>> SelectedItems;
+
+	if (ConstructedAssetListView.IsValid())
+	{
+		ConstructedAssetListView->GetSelectedItems(SelectedItems);
+
+		for (TSharedPtr<FShotData> item : SelectedItems)
+		{
+			FString DirBrowse = FPaths::GetPath(item->LastestFilePath);
+			FPlatformProcess::ExploreFolder(*(item->LastestFilePath));
+			DebugHeader::Print("Browse File Location" + DirBrowse);
+
+		}
+
+	}
+
+}
+
+void SShotReaderWidgetTab::BrowseAssetLocation()
+{
+	DebugHeader::Print("Browse Asset Location Clicked");
+
 }
 
 #pragma endregion

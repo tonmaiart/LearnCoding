@@ -45,12 +45,15 @@ FString ShotRootPath;
 void Construct(const FArguments& InArgs);
 
 TSharedRef<SListView<TSharedPtr<FShotData>>> ConstructAssetListView();
-TSharedPtr< SListView <TSharedPtr <FAssetData>>> ConstructedAssetListView;
+TSharedPtr< SListView <TSharedPtr <FShotData>>> ConstructedAssetListView;
 
 TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedPtr<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
 TSharedPtr<SWidget> OnGeneratedContextMenu();
 
 void ReimportSelectedItem();
+void ImportSelectedItem();
+void BrowseFileLocation();
+void BrowseAssetLocation();
 
 #pragma endregion
 };
