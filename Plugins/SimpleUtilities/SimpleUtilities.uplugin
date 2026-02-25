@@ -21,14 +21,19 @@
 			"LoadingPhase": "PreDefault"
 		}
 	],
-	"Plugins":
-		
-		[
-			{
-				"Name": "EditorScriptingUtilities",
-				"Enabled": true
-
-			}
-		]
+	"Plugins": [
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "GeometryCache",
+			"Enabled": true
+		},
+		{
+			"Name": "AlembicImporter",
+			"Enabled": true
+		}
+	]
 	
 }

@@ -3,12 +3,16 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
+#include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "IAssetTools.h"
 
-// Copyright Epic Games, Inc. All Rights Reserved.
+#include "GeometryCache.h"
+#include "AlembicImportFactory.h"
+#include "AbcImportSettings.h"
+#include "CoreMinimal.h"
 
-#pragma once
-
-#include "Modules/ModuleManager.h"
+class UGeometryCache;
 
 class FSimpleUtilitiesModule : public IModuleInterface
 {
@@ -115,4 +119,52 @@ namespace Utility
 			return ReturnResult;
 		}
 	}
-}
+
+	
+
+
+	static UGeometryCache* ImportAlembicFile(FString SourceFilePath, FString DestinationPath)
+		{
+			FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+
+			// Create AbcFactory
+			UAlembicImportFactory* AbcFactory = NewObject<UAlembicImportFactory>();
+
+			//Setting Import Configuration
+			AbcFactory->ImportSettings->ImportType = EAlembicImportType::GeometryCache;
+			AbcFactory->ImportSettings->GeometryCacheSettings.bFlattenTracks = true;
+
+			//Close Ui (Slient Import)
+			AbcFactory->bEditAfterNew = false;
+			AbcFactory->bShowOption = false;
+
+			// Import Automate
+			TArray<FString> FileNames;
+			FileNames.Add(SourceFilePath);
+
+			UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
+			ImportData->Filenames.Add(SourceFilePath);
+			ImportData->DestinationPath = DestinationPath;
+
+			TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
+
+			return nullptr;
+
+		}
+
+	static FString CheckAlembicImportPath(FString AlembicAssestFullPath)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(AlembicAssestFullPath));
+
+		if (AssetData.IsValid())
+		{
+			FString ImportPath;
+
+			if (AssetData.GetTagValue(TEXT("AssetImportData"), ImportPath))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Get Source Path"), *ImportPath);
+			}
+		}
+	}
+	}

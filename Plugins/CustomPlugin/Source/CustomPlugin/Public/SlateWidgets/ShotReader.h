@@ -10,6 +10,7 @@ USTRUCT(BlueprintType) struct FShotData
 {
 	GENERATED_BODY()
 
+	UPROPERTY() bool IsAssetExists;
 	UPROPERTY() FString ShotMainName;
 	UPROPERTY() FString ShotName;
 	UPROPERTY() int32 ShotVersion;
@@ -18,9 +19,11 @@ USTRUCT(BlueprintType) struct FShotData
 	UPROPERTY() FString AssetName;
 
 	UPROPERTY() FString CurrentImportPath;
-
+	UPROPERTY() FString ContentAssetDirPath;
+	UPROPERTY() FString ContentAssetFilePath;
+		
 	UPROPERTY() TArray<FString> ExternalFileNameList;
-	UPROPERTY() TMap<FString,FAssetData> CurrentAssetDataList;
+	UPROPERTY() FAssetData CurrentAssetData;
 
 };
 
@@ -46,6 +49,8 @@ void Construct(const FArguments& InArgs);
 
 TSharedRef<SListView<TSharedPtr<FShotData>>> ConstructAssetListView();
 TSharedPtr< SListView <TSharedPtr <FShotData>>> ConstructedAssetListView;
+
+//TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName);
 
 TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedPtr<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
 TSharedPtr<SWidget> OnGeneratedContextMenu();

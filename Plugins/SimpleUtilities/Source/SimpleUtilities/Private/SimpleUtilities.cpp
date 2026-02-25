@@ -5,6 +5,10 @@
 #include "ObjectTools.h"
 #include "CoreMinimal.h"
 
+#include "GeometryCache.h"
+#include "AlembicImportFactory.h"
+#include "AbcImportSettings.h"
+
 #define LOCTEXT_NAMESPACE "FSimpleUtilitiesModule"
 
 void FSimpleUtilitiesModule::StartupModule()
@@ -36,3 +40,5 @@ bool FSimpleUtilitiesModule::IsPathSecure(const FString& AssetPath)
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FSimpleUtilitiesModule, SimpleUtilities)
+
+

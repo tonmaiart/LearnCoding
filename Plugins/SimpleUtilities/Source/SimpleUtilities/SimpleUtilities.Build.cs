@@ -31,7 +31,11 @@ public class SimpleUtilities : ModuleRules
                 "Core",
                 "Blutility",
                 "EditorScriptingUtilities",
-                "UnrealEd"
+                "UnrealEd",
+
+                "GeometryCache",
+                "AlembicImporter",
+                "AlembicLibrary",
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
@@ -44,8 +48,12 @@ public class SimpleUtilities : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-				// ... add private dependencies that you statically link with here ...	
-			}
+                "UnrealEd",
+
+               "GeometryCache",
+                "AlembicImporter",
+                "AlembicLibrary"
+            }
             );
 
 

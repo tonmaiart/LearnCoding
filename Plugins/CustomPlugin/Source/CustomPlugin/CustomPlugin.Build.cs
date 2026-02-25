@@ -34,6 +34,7 @@ public class CustomPlugin : ModuleRules
                 "SimpleUtilities",
 				"InputCore",
                 "Slate",
+                "AssetRegistry"
 
 				// ... add other public dependencies that you statically link with here ...
 			}
@@ -48,6 +49,9 @@ public class CustomPlugin : ModuleRules
 				"Slate",
 				"SlateCore",
                 "EditorScriptingUtilities",
+				"UnrealEd",
+                "AlembicLibrary",
+                "AlembicImporter",
 
 				// ... add private dependencies that you statically link with here ...	
 			}

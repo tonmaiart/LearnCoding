@@ -11,6 +11,7 @@ class FCustomPluginModule : public IModuleInterface
 public:
 	FString ShotRootPath = "G:\\My Drive\\Projects\\KafkaProj\\publish\\Shot";
 	FString SubFolder = "Layout";
+	FString ContentShotRootPath = "/Game/Sequences";
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;

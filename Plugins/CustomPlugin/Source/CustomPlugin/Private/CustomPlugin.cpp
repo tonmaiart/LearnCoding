@@ -276,7 +276,7 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	TArray<FString> ShotListPathList;
-	TArray<FString>DirectoryContent = Utility::GetDirectoryContent(ShotRootPath, true, false);
+	TArray<FString> DirectoryContent = Utility::GetDirectoryContent(ShotRootPath, true, false);
 
 	// loop each shot main name to get shot main path
 	for (const FString& ShotMainDirPath : DirectoryContent)
@@ -298,6 +298,11 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 	for (const FString& ShotListPath : ShotListPathList)
 	{
+		// Create Fasset Registry Module
+		
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+
 		// Get Lastest Version Folder
 		FString ShotListExtraPath = FPaths::Combine(ShotListPath,SubFolder);
 		Utility::FVersionResult LastestVersionData = Utility::GetLastestVersionFolder(ShotListExtraPath);
@@ -317,15 +322,33 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 		for (const FString& ShotFile : FileList)
 		{
-
 			//Create FShotData
 			TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
-			CurrentShotData->ShotMainName = FPaths::GetCleanFilename(ShotListPath);;
 			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotListPath);
+			CurrentShotData->ShotMainName = CurrentShotData->ShotName.Left(3);
+
 			CurrentShotData->AssetName = FPaths::GetBaseFilename(ShotFile);
 			CurrentShotData->LastestFilePath = ShotFile;
+			//CurrentShotData->
+			//Build File Shot Directory
+			FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, CurrentShotData->ShotMainName, CurrentShotData->ShotName);
+			FString ContentAssetFilePath = FPaths::Combine(ContentAssetDirPath, FPaths::GetCleanFilename(ShotFile));
+
+			CurrentShotData->ContentAssetDirPath = ContentAssetDirPath;
+			CurrentShotData->ContentAssetFilePath = ContentAssetFilePath;
+			CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
 			
-			DebugHeader::Print("- Detect File Anim - " + ShotFile);
+			if (UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath))
+			{
+				CurrentShotData->IsAssetExists = true;
+				DebugHeader::Print("- Detect Assets : " + ContentAssetFilePath);
+			}
+			else
+			{
+				CurrentShotData->IsAssetExists = false;
+			}
+
+			
 
 			ShotDataListResult.Add(CurrentShotData);
 		}
