@@ -271,7 +271,7 @@ void FCustomPluginModule::RegisterShotReader()
 	
 }
 
-TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
+TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 {
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
@@ -294,7 +294,7 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 	}
 
 	// loop for each shot list name to get shot list path
-	TArray<TSharedRef<FShotData>> ShotDataListResult;
+	TArray<TSharedPtr<FShotData>> ShotDataListResult;
 
 	for (const FString& ShotListPath : ShotListPathList)
 	{
@@ -321,10 +321,12 @@ TArray<TSharedRef<FShotData>> FCustomPluginModule::GetShotData()
 			DebugHeader::Print("# Sub Directory To Search : " + FilePath);
 
 			//Create FShotData
-			TSharedRef<FShotData> CurrentShotData = MakeShared<FShotData>();
-			CurrentShotData->ShotMainName = FPaths::GetCleanFilename(ShotFile);;
-			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotFile);
+			TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
+			CurrentShotData->ShotMainName = FPaths::GetCleanFilename(ShotListPath);;
+			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotListPath);
+			CurrentShotData->AssetName = FPaths::GetBaseFilename(ShotFile);
 			CurrentShotData->LastestFilePath = FilePath;
+			
 			DebugHeader::Print("- Detect File Anim - " + ShotFile);
 
 			ShotDataListResult.Add(CurrentShotData);

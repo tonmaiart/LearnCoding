@@ -56,7 +56,7 @@ private:
 #pragma region ShotReader
 	void RegisterShotReader();
 	TSharedRef<SDockTab> OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs);
-	TArray<TSharedRef<FShotData>> GetShotData(); // Use For Get All Need Data for update shot
+	TArray<TSharedPtr<FShotData>> GetShotData(); // Use For Get All Need Data for update shot
 	
 #pragma endregion
 

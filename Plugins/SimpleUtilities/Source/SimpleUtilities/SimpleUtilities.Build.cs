@@ -25,6 +25,7 @@ public class SimpleUtilities : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
+
                 "ContentBrowser",
                 "AssetRegistry",
                 "Core",

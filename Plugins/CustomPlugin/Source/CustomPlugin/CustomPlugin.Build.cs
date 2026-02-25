@@ -32,7 +32,9 @@ public class CustomPlugin : ModuleRules
 				"EditorScriptingUtilities",
 				"UnrealEd",
                 "SimpleUtilities",
-				"InputCore"
+				"InputCore",
+                "Slate",
+
 				// ... add other public dependencies that you statically link with here ...
 			}
             );

@@ -4,6 +4,24 @@
 
 #include "Modules/ModuleManager.h"
 
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#pragma once
+
+#include "Modules/ModuleManager.h"
+
+class FSimpleUtilitiesModule : public IModuleInterface
+{
+public:
+
+	/** IModuleInterface implementation */
+	virtual void StartupModule() override;
+	virtual void ShutdownModule() override;
+
+	bool IsPathSecure(const FString& AssetPath);
+};
+
+
 namespace Utility
 { 
 	struct FVersionResult
@@ -58,7 +76,7 @@ namespace Utility
 	{
 		TArray<FString> AllSubDirs = GetDirectoryContent(ParentPath, true, false);
 		TArray<FString> VersionFolder;
-		int32 Version;
+		TArray<int32> AllVersion;
 
 		FRegexPattern Pattern(TEXT("^v\\d{3}$"));
 
@@ -76,7 +94,7 @@ namespace Utility
 				
 				// Get Version
 				FString VersionString = Matcher.GetCaptureGroup(1);
-				Version = FCString::Atoi(*VersionString);
+				AllVersion.Add(FCString::Atoi(*VersionString));
 			}
 		}
 		
@@ -90,8 +108,10 @@ namespace Utility
 		else
 		{
 			VersionFolder.Sort();
+			AllVersion.Sort();
+
 			ReturnResult.Path = VersionFolder.Last();
-			ReturnResult.Version = Version;
+			ReturnResult.Version = AllVersion.Last();
 			return ReturnResult;
 		}
 	}

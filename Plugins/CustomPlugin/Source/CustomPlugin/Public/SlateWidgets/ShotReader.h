@@ -14,6 +14,9 @@ USTRUCT(BlueprintType) struct FShotData
 	UPROPERTY() FString ShotName;
 	UPROPERTY() int32 ShotVersion;
 	UPROPERTY() FString LastestFilePath;
+
+	UPROPERTY() FString AssetName;
+
 	UPROPERTY() FString CurrentImportPath;
 
 	UPROPERTY() TArray<FString> ExternalFileNameList;
@@ -25,7 +28,7 @@ class SShotReaderWidgetTab : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SShotReaderWidgetTab){}
 
-	SLATE_ARGUMENT(TArray <TSharedRef<FShotData>>,ShotDataList)
+	SLATE_ARGUMENT(TArray<TSharedPtr<FShotData>>,ShotDataList)
 	
 	SLATE_END_ARGS()
 
@@ -34,13 +37,20 @@ private:
 
 public:
 
-TArray<TSharedRef<FShotData>> ShotDataList;
+TSharedPtr<SListView<TSharedPtr<FShotData>>> ShotListView;
+TArray<TSharedPtr<FShotData>> ShotDataList;
 FString ShotRootPath;
 
 #pragma region ConstructWidget
 void Construct(const FArguments& InArgs);
-TSharedRef<SListView<TSharedRef<FShotData>>> ConstructAssetListView();
-TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedRef<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
+
+TSharedRef<SListView<TSharedPtr<FShotData>>> ConstructAssetListView();
+TSharedPtr< SListView <TSharedPtr <FAssetData>>> ConstructedAssetListView;
+
+TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedPtr<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
+TSharedPtr<SWidget> OnGeneratedContextMenu();
+
+void ReimportSelectedItem();
 
 #pragma endregion
 };
