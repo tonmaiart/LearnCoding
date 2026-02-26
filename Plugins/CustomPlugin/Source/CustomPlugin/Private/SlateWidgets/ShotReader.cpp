@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "CustomPlugin.h"
+
 #include "SlateWidgets/ShotReader.h"
 #include "DebugHeader.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -28,6 +30,9 @@
 #include "MovieSceneToolHelpers.h"
 #include "MovieScenePossessable.h"
 #include "MovieSceneToolsUserSettings.h"
+
+#include "ContentBrowserModule.h"
+#include "IContentBrowserSingleton.h"
 
 #pragma region ConstructWidget
 
@@ -68,6 +73,30 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 				[
 					SShotReaderWidgetTab::ConstructAssetListView()
 				]
+
+				//Add Reload Button
+				+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0,10,0,0)
+					.HAlign(HAlign_Right)
+
+				[
+					SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						
+						[
+							SNew(SButton)
+								[
+									SNew(STextBlock)
+										.Text(FText::FromString("Reload"))
+										.Font(FCoreStyle::Get().GetFontStyle("NormalFont")) 
+										.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+								]
+								.OnClicked(this, &SShotReaderWidgetTab::OnReloadButtonClicked)
+
+						]
+				]
 		];
 }
 
@@ -95,7 +124,7 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 		.FillWidth(.4f)
 
 		+ SHeaderRow::Column(FName("ImportPath"))
-		.DefaultLabel(FText::FromString("Absolute File Path"))
+		.DefaultLabel(FText::FromString("Current Asset Import File Path"))
 
 		;
 
@@ -199,14 +228,14 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 	MenuBuilder.BeginSection("SectionExplore", FText::FromString("Explore"));
 
 	MenuBuilder.AddMenuEntry(
-		FText::FromString("Browse File in File Explorer"),
+		FText::FromString("Show in File Explorer"),
 		FText::FromString("Import file lastest version"),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseFileLocation))
 	);
 
 	MenuBuilder.AddMenuEntry(
-		FText::FromString("Browse Asset File in Content Browser"),
+		FText::FromString("Show in Content Browser"),
 		FText::FromString("Reimport file to lastest version"),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseAssetLocation))
@@ -300,6 +329,7 @@ void SShotReaderWidgetTab::ImportSelectedItem()
 		DebugHeader::Print("Import File From : " + ImportPath);
 		DebugHeader::Print("Import File To : " + DestinationDirPath);
 
+		ReloadAll();
 
 	}
 
@@ -330,6 +360,44 @@ void SShotReaderWidgetTab::BrowseFileLocation()
 
 void SShotReaderWidgetTab::BrowseAssetLocation()
 {
+	TArray<TSharedPtr<FShotData>> SelectedItems;
+	 
+	UE_LOG(LogTemp, Log, TEXT("# BrowseAssetLocation"));
+
+
+	if (!ConstructedAssetListView.IsValid())
+	{
+		UE_LOG(LogTemp, Log, TEXT("# ConstructedAssetListView is Invalid"));
+		return;
+	}
+
+	ConstructedAssetListView->GetSelectedItems(SelectedItems);
+
+	if (SelectedItems.Num() == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("# Not Found Any Selected Items"));
+		return;
+	}
+	
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::GetModuleChecked<FContentBrowserModule>("ContentBrowser");
+	
+	TArray<FAssetData> AssetDataList;
+	FString TargetPath = SelectedItems[0]->ContentAssetFilePath;
+
+	if (!UEditorAssetLibrary::DoesAssetExist(TargetPath))
+	{
+		UE_LOG(LogTemp, Log, TEXT("# Asset Path Not Exist %s"), *TargetPath);
+		return;
+	}
+
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FSoftObjectPath AssetObjectPath(TargetPath);
+	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(TargetPath);
+	AssetDataList.Add(AssetData);
+
+	ContentBrowserModule.Get().SyncBrowserToAssets(AssetDataList);
+
 	DebugHeader::Print("Browse Asset Location Clicked");
 }
 
@@ -349,6 +417,27 @@ void SShotReaderWidgetTab::BuildSequencerToSelectedShot()
 		UE_LOG(LogTemp, Log, TEXT("# Failed to build Sequencer"));
 
 	}
+}
+
+void SShotReaderWidgetTab::ReloadAll()
+{
+	FCustomPluginModule& CustomModule = FModuleManager::GetModuleChecked<FCustomPluginModule>("CustomPlugin");
+
+	// Update Array Data
+	ShotDataList = CustomModule.GetShotData();
+
+	// Refresh the list view
+	if (ConstructedAssetListView.IsValid())
+	{
+		ConstructedAssetListView->RebuildList();
+	}
+}
+
+FReply SShotReaderWidgetTab::OnReloadButtonClicked()
+{
+	ReloadAll();
+
+	return FReply::Handled();
 }
 
 #pragma endregion

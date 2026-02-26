@@ -21,6 +21,7 @@ public:
 
 	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
 
+	TArray<TSharedPtr<FShotData>> GetShotData(); // Use For Get All Need Data for update shot
 
 #pragma endregion
 private:
@@ -57,7 +58,6 @@ private:
 #pragma region ShotReader
 	void RegisterShotReader();
 	TSharedRef<SDockTab> OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs);
-	TArray<TSharedPtr<FShotData>> GetShotData(); // Use For Get All Need Data for update shot
 	
 #pragma endregion
 

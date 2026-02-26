@@ -68,6 +68,8 @@ void ImportSelectedItem();
 void BrowseFileLocation();
 void BrowseAssetLocation();
 void BuildSequencerToSelectedShot();
+void ReloadAll();
+FReply OnReloadButtonClicked();
 
 #pragma endregion
 };

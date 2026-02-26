@@ -336,32 +336,30 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 			int32 CurrentVersion = FCString::Atoi(*CurrentVersionFolder);
 			FString GetPolishStateText;
 
-			FString ShortenPath = ShotFile;
-			FString BasePath = ShotRootPath;
+			FString CurrentImportPath = Utility::GetAssetImportPath(ContentAssetFilePath);
 
+			FString ShortenPath = CurrentImportPath;
+			FString BasePath = ShotRootPath;
 			FPaths::NormalizeFilename(ShortenPath);
 			FPaths::NormalizeFilename(BasePath);
-
 			FPaths::MakePathRelativeTo(ShortenPath, *BasePath);
-
-
-
 
 			// Update FShotData Attribute
 			// Shot Info
 			CurrentShotData->ShotName = ShotName;
 			CurrentShotData->ShotMainName = ShotPrefix;
 
-			// Content Browser Info
+			// Current Asset Data
 			CurrentShotData->AssetName = FileBaseName;
 			CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
 			CurrentShotData->ContentAssetDirPath = ContentAssetDirPath;
 			CurrentShotData->ContentAssetFilePath = ContentAssetFilePath;
 			CurrentShotData->CurrentVersion = CurrentVersion;
 			CurrentShotData->IsAssetExists = UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath);
+			CurrentShotData->CurrentImportPath = CurrentImportPath;
+			CurrentShotData->CurrentImportPathShorten = ShortenPath;
 
 			// Lastest in Directory Info
-			CurrentShotData->CurrentImportPathShorten = ShortenPath;
 			CurrentShotData->LastestFilePath = ShotFile;
 			CurrentShotData->LastestVersion = LastestVersion;
 

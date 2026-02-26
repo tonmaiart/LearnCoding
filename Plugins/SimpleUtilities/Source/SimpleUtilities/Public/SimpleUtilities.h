@@ -179,10 +179,10 @@ namespace Utility
 
 		}
 
-	static FString CheckAlembicImportPath(FString AlembicAssestFullPath)
+	static FString GetAssetImportPath(FString AssetFullPath)
 	{
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(AlembicAssestFullPath));
+		FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(AssetFullPath));
 
 		if (AssetData.IsValid())
 		{
@@ -191,8 +191,11 @@ namespace Utility
 			if (AssetData.GetTagValue(TEXT("AssetImportData"), ImportPath))
 			{
 				UE_LOG(LogTemp, Log, TEXT("Get Source Path"), *ImportPath);
+				return ImportPath;
 			}
 		}
+
+		return FString();
 	}
 
 	static FGuid GetCameraGuidByName(ULevelSequence* InSequence, FString CameraName)
