@@ -11,6 +11,7 @@
 #include "SlateWidgets/ShotReader.h"
 #include "Misc/Paths.h"
 #include "SimpleUtilities.h"
+#include "CoreMinimal.h"
 
 //#include <iostream>
 //#include <filesystem>
@@ -302,54 +303,55 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 		
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-
 		// Get Lastest Version Folder
 		FString ShotListExtraPath = FPaths::Combine(ShotListPath,SubFolder);
 		Utility::FVersionResult LastestVersionData = Utility::GetLastestVersionFolder(ShotListExtraPath);
 		FString LastestVersionPath = LastestVersionData.Path;
-		int32 LastestVersion = LastestVersionData.Version;
-		
+
 		DebugHeader::Print("- Shot List Version Path : " + ShotListPath);
 		DebugHeader::Print("- Get Lastest Version Path : " + LastestVersionPath);
 
-		if (LastestVersionPath.IsEmpty())
-		{
-			continue; // Skip this folder because have no version folder detected
-		}
+		if (LastestVersionPath.IsEmpty()) continue;  // Skip this folder because have no version folder detected
 
 		// Get File of given lastest path
 		TArray<FString> FileList = Utility::GetDirectoryContent(LastestVersionPath,false,true);
 
 		for (const FString& ShotFile : FileList)
 		{
-			//Create FShotData
+			//Create FShotData for return
 			TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
-			CurrentShotData->ShotName = FPaths::GetBaseFilename(ShotListPath);
-			CurrentShotData->ShotMainName = CurrentShotData->ShotName.Left(3);
 
-			CurrentShotData->AssetName = FPaths::GetBaseFilename(ShotFile);
-			CurrentShotData->LastestFilePath = ShotFile;
-			//CurrentShotData->
-			//Build File Shot Directory
-			FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, CurrentShotData->ShotMainName, CurrentShotData->ShotName);
-			FString ContentAssetFilePath = FPaths::Combine(ContentAssetDirPath, FPaths::GetCleanFilename(ShotFile));
+			FString ShotName = FPaths::GetBaseFilename(ShotListPath);
+			FString ShotPrefix = ShotName.Left(3);
+			FString FileBaseName = FPaths::GetBaseFilename(ShotFile);
+			FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName);
+			FString ContentAssetFilePath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName,FPaths::GetCleanFilename(ShotFile));
+			FString CurrentVersionFolder = FPaths::GetPath(ShotFile).Right(3);
+			FString LastestVersionFolder = LastestVersionPath.Right(3);
+			int32 LastestVersion = FCString::Atoi(*LastestVersionFolder);
+			int32 CurrentVersion = FCString::Atoi(*CurrentVersionFolder);
 
+			UE_LOG(LogTemp, Log, TEXT("CurrentVersionFolder : Current %d , Lastest %d , Version Folder %s,Lastest Path : %s")
+				, CurrentVersion, LastestVersion, *LastestVersionFolder,*LastestVersionPath);
+
+			// Update FShotData Attribute
+			// Shot Info
+			CurrentShotData->ShotName = ShotName;
+			CurrentShotData->ShotMainName = ShotPrefix;
+
+			// Content Browser Info
+			CurrentShotData->AssetName = FileBaseName;
+			CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
 			CurrentShotData->ContentAssetDirPath = ContentAssetDirPath;
 			CurrentShotData->ContentAssetFilePath = ContentAssetFilePath;
-			CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
-			
-			if (UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath))
-			{
-				CurrentShotData->IsAssetExists = true;
-				DebugHeader::Print("- Detect Assets : " + ContentAssetFilePath);
-			}
-			else
-			{
-				CurrentShotData->IsAssetExists = false;
-			}
+			CurrentShotData->CurrentVersion = CurrentVersion;
+			CurrentShotData->IsAssetExists = UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath);
 
-			
+			// Lastest in Directory Info
+			CurrentShotData->LastestFilePath = ShotFile;
+			CurrentShotData->LastestVersion = LastestVersion;
 
+			// Add to Array
 			ShotDataListResult.Add(CurrentShotData);
 		}
 

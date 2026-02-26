@@ -9,11 +9,14 @@
 USTRUCT(BlueprintType) struct FShotData
 {
 	GENERATED_BODY()
+	UPROPERTY() bool IsAnyVersionExists;
 
 	UPROPERTY() bool IsAssetExists;
 	UPROPERTY() FString ShotMainName;
 	UPROPERTY() FString ShotName;
-	UPROPERTY() int32 ShotVersion;
+	UPROPERTY() int32 CurrentVersion;
+	UPROPERTY() int32 LastestVersion;
+
 	UPROPERTY() FString LastestFilePath;
 
 	UPROPERTY() FString AssetName;

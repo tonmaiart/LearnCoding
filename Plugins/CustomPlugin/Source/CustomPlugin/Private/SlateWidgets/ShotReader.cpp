@@ -120,7 +120,7 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<F
 			.FillWidth(.08f)
 
 			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->ShotVersion)))
+				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->LastestVersion)))
 
 			]
 
@@ -129,7 +129,7 @@ TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<F
 			.FillWidth(.08f)
 
 			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->ShotVersion)))
+				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->CurrentVersion)))
 
 			]
 
