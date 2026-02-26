@@ -78,24 +78,24 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 	// Create Header Row
 	TSharedRef<SHeaderRow> HeaderRow = SNew(SHeaderRow)
 
-		+ SHeaderRow::Column(FName("ShotName"))
-		.DefaultLabel(FText::FromString("Shot Name"))
+		+ SHeaderRow::Column(FName("SequenceName"))
+		.DefaultLabel(FText::FromString("SQ"))
 		.FillWidth(.2f)
 
-		+ SHeaderRow::Column(FName("Last"))
-		.DefaultLabel(FText::FromString("Lastest Version"))
-		.FillWidth(.08f)
+		+ SHeaderRow::Column(FName("ShotName"))
+		.DefaultLabel(FText::FromString("Shot"))
+		.FillWidth(.2f)
 
-		+ SHeaderRow::Column(FName("Current"))
-		.DefaultLabel(FText::FromString("Current Version"))
-		.FillWidth(.08f)
+		+ SHeaderRow::Column(FName("Version"))
+		.DefaultLabel(FText::FromString("Version"))
+		.FillWidth(.2f)
 
 		+ SHeaderRow::Column(FName("AssetName"))
 		.DefaultLabel(FText::FromString("Asset Name"))
-		.FillWidth(.5f)
+		.FillWidth(.4f)
 
 		+ SHeaderRow::Column(FName("ImportPath"))
-		.DefaultLabel(FText::FromString("Import Path"))
+		.DefaultLabel(FText::FromString("Absolute File Path"))
 
 		;
 
@@ -113,58 +113,56 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 	
 }
 
-//TSharedRef<SWidget> SShotReaderWidgetTab::GenerateWidgetForColumn(const FName& ColumnName)
-//{
-//	//return SNew(SWidget,nullptr);
-//	return;
-//}
-
 TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	TSharedRef<ITableRow> GeneratedRow = SNew(STableRow<TSharedRef<FShotData>>, OwnerTable)
 		[
-			SNew(SHorizontalBox)
+			SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("WhiteBrush"))
+				.BorderBackgroundColor(ShotDataStruct->IsAssetExists ? FLinearColor(0.0f,1.0f,0.0f,0.2f) : FLinearColor(0.1f, 0.0f, 0.0f, 0.2f))
+				[
+				SNew(SHorizontalBox)
 
-			+SHorizontalBox::Slot()
+				+SHorizontalBox::Slot()
+					.HAlign(HAlign_Left)
+					.FillWidth(.2f)
+
+					[
+						SNew(STextBlock).Text(FText::FromString(ShotDataStruct->ShotMainName))
+					]
+
+				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
 				.FillWidth(.2f)
 
 				[
-					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->ShotMainName))
+					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->ShotName))
 				]
 
-			+SHorizontalBox::Slot()
-			.HAlign(HAlign_Left)
-			.FillWidth(.08f)
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				.FillWidth(.2f)
 
-			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->LastestVersion)))
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->PolishStateText))
 
-			]
+				]
 
-			+ SHorizontalBox::Slot()
-			.HAlign(HAlign_Left)
-			.FillWidth(.08f)
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				.FillWidth(.4f)
 
-			[
-				SNew(STextBlock).Text(FText::FromString(FString::FromInt(ShotDataStruct->CurrentVersion)))
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->AssetName))
 
-			]
+				]
 
-			+ SHorizontalBox::Slot()
-			.HAlign(HAlign_Left)
-			.FillWidth(.5f)
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString(ShotDataStruct->CurrentImportPathShorten))
 
-			[
-				SNew(STextBlock).Text(FText::FromString(ShotDataStruct->AssetName))
-
-			]
-
-			+ SHorizontalBox::Slot()
-			.HAlign(HAlign_Left)
-			[
-				SNew(STextBlock).Text(FText::FromString(ShotDataStruct->LastestFilePath))
-
+				]
 			]
 		];
 	
@@ -187,35 +185,45 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 		);
 
 		MenuBuilder.AddMenuEntry(
-			FText::FromString("Reimport File (Update)"),
+			FText::FromString("Reimport / Update File"),
 			FText::FromString("Reimport file to lastest version"),
 			FSlateIcon(),
 			FUIAction(FExecuteAction::CreateSP(this,&SShotReaderWidgetTab::ReimportSelectedItem))
 		);
 
-		MenuBuilder.AddMenuEntry(
-			FText::FromString("Browse File in File Explorer"),
-			FText::FromString("Import file lastest version"),
-			FSlateIcon(),
-			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseFileLocation))
-		);
-
-		MenuBuilder.AddMenuEntry(
-			FText::FromString("Browse Asset File in Content Browser"),
-			FText::FromString("Reimport file to lastest version"),
-			FSlateIcon(),
-			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseAssetLocation))
-		);
-
-		MenuBuilder.AddMenuEntry(
-			FText::FromString("Build Sequencer"),
-			FText::FromString("Build Sequencer by include character , camera"),
-			FSlateIcon(),
-			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BuildSequencerToSelectedShot))
-		);
 
 	}
 
+	MenuBuilder.EndSection();
+
+	MenuBuilder.BeginSection("SectionExplore", FText::FromString("Explore"));
+
+	MenuBuilder.AddMenuEntry(
+		FText::FromString("Browse File in File Explorer"),
+		FText::FromString("Import file lastest version"),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseFileLocation))
+	);
+
+	MenuBuilder.AddMenuEntry(
+		FText::FromString("Browse Asset File in Content Browser"),
+		FText::FromString("Reimport file to lastest version"),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseAssetLocation))
+	);
+
+
+	MenuBuilder.EndSection();
+
+	MenuBuilder.BeginSection("SectionOperation", FText::FromString("Operations"));
+	{
+		MenuBuilder.AddMenuEntry(
+			FText::FromString("Build Sequencer"),
+			FText::FromString("Build Sequencer by including character and camera"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BuildSequencerToSelectedShot))
+		);
+	}
 	MenuBuilder.EndSection();
 
 	return MenuBuilder.MakeWidget();

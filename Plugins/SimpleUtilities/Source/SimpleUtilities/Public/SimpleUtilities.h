@@ -169,6 +169,12 @@ namespace Utility
 
 			TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
 
+			for (UObject* asset : ImportedAssets) {
+				UEditorAssetLibrary::SaveAsset(asset->GetPathName(), false);
+			}
+
+
+
 			return nullptr;
 
 		}

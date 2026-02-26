@@ -329,14 +329,23 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 			FString ShotPrefix = ShotName.Left(3);
 			FString FileBaseName = FPaths::GetBaseFilename(ShotFile);
 			FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName);
-			FString ContentAssetFilePath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName,FPaths::GetCleanFilename(ShotFile));
+			FString ContentAssetFilePath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName, FileBaseName);
 			FString CurrentVersionFolder = FPaths::GetPath(ShotFile).Right(3);
 			FString LastestVersionFolder = LastestVersionPath.Right(3);
 			int32 LastestVersion = FCString::Atoi(*LastestVersionFolder);
 			int32 CurrentVersion = FCString::Atoi(*CurrentVersionFolder);
+			FString GetPolishStateText;
 
-			UE_LOG(LogTemp, Log, TEXT("CurrentVersionFolder : Current %d , Lastest %d , Version Folder %s,Lastest Path : %s")
-				, CurrentVersion, LastestVersion, *LastestVersionFolder,*LastestVersionPath);
+			FString ShortenPath = ShotFile;
+			FString BasePath = ShotRootPath;
+
+			FPaths::NormalizeFilename(ShortenPath);
+			FPaths::NormalizeFilename(BasePath);
+
+			FPaths::MakePathRelativeTo(ShortenPath, *BasePath);
+
+
+
 
 			// Update FShotData Attribute
 			// Shot Info
@@ -352,11 +361,35 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 			CurrentShotData->IsAssetExists = UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath);
 
 			// Lastest in Directory Info
+			CurrentShotData->CurrentImportPathShorten = ShortenPath;
 			CurrentShotData->LastestFilePath = ShotFile;
 			CurrentShotData->LastestVersion = LastestVersion;
 
+			// Create Polish Text
+			if (!CurrentShotData->IsAssetExists)
+			{
+				GetPolishStateText = FString::Printf(TEXT("%d (Not Loaded)"), LastestVersion);
+			}
+			else if (CurrentVersion < LastestVersion)
+			{
+				GetPolishStateText = FString::Printf(TEXT("%d -> %d"), CurrentVersion, LastestVersion);
+			}
+			else if (CurrentVersion == LastestVersion)
+			{
+				GetPolishStateText = FString::Printf(TEXT("%d"), LastestVersion);
+
+			}
+
+			// Create Polish State text
+			CurrentShotData->PolishStateText = GetPolishStateText;
+
+
 			// Add to Array
 			ShotDataListResult.Add(CurrentShotData);
+			
+			UE_LOG(LogTemp, Log, TEXT("Base Path : %s , Full Path : %s , ShortenPath : %s , IsAssetExists : %s"),
+				*BasePath, *ShotFile, *ShortenPath,*LexToString(CurrentShotData->IsAssetExists));
+			UE_LOG(LogTemp, Log, TEXT("Content Browser Asset Path : %s"),*ContentAssetFilePath);
 		}
 
 		// 
