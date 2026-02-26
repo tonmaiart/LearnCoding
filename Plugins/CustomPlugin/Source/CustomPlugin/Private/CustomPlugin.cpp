@@ -314,6 +314,7 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 		if (LastestVersionPath.IsEmpty())
 		{
+			UE_LOG(LogTemp, Log, TEXT("Skipped Shot :%s because not found any version folder."), *LastestVersionPath);
 			continue; // Skip this folder because have no version folder detected
 		}
 
@@ -361,7 +362,7 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 TSharedRef<SDockTab> FCustomPluginModule::OnSpawnShotReader(const FSpawnTabArgs& SpawnTabArgs)
 {
-	
+	UE_LOG(LogTemp, Log, TEXT("On Spawn Shot Reader"));
 
 	return SNew(SDockTab)
 		.TabRole(ETabRole::NomadTab)

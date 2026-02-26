@@ -34,8 +34,11 @@ public class CustomPlugin : ModuleRules
                 "SimpleUtilities",
 				"InputCore",
                 "Slate",
-                "AssetRegistry"
-
+                "AssetRegistry",
+                "LevelSequence",
+                "MovieScene",  
+                "MovieSceneTools",	
+                "LevelSequenceEditor"
 				// ... add other public dependencies that you statically link with here ...
 			}
             );

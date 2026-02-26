@@ -51,7 +51,7 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> ConstructAssetListView();
 TSharedPtr< SListView <TSharedPtr <FShotData>>> ConstructedAssetListView;
 
 //TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName);
-
+	
 TSharedRef<ITableRow> OnGeneratedRowAssetList (TSharedPtr<FShotData> ShotDataStruct,const TSharedRef<STableViewBase>& OwnerTable);
 TSharedPtr<SWidget> OnGeneratedContextMenu();
 
@@ -59,6 +59,7 @@ void ReimportSelectedItem();
 void ImportSelectedItem();
 void BrowseFileLocation();
 void BrowseAssetLocation();
+void BuildSequencerToSelectedShot();
 
 #pragma endregion
 };

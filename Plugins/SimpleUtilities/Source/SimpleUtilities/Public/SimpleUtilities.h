@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -11,6 +11,27 @@
 #include "AlembicImportFactory.h"
 #include "AbcImportSettings.h"
 #include "CoreMinimal.h"
+
+#include "EditorAssetLibrary.h"
+
+
+
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
+
+#include "MovieScene.h"
+#include "MovieSceneToolHelpers.h"
+#include "MovieScenePossessable.h"
+#include "MovieSceneToolsUserSettings.h"
+
+#include "LevelSequenceEditorModule.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+
+//#include "/*Factories*//LevelSequenceFactoryNew.h"
+//#include "LevelSequenceFactoryNew.h"
+
+class ULevelSequence;
 
 class UGeometryCache;
 
@@ -167,4 +188,141 @@ namespace Utility
 			}
 		}
 	}
+
+	static FGuid GetCameraGuidByName(ULevelSequence* InSequence, FString CameraName)
+	{
+		if (!InSequence) return FGuid();
+
+		UMovieScene* MovieScene = InSequence->GetMovieScene();
+
+		for (int32 i = 0; i < MovieScene->GetPossessableCount(); ++i)
+		{
+			const FMovieScenePossessable& Possessable = MovieScene->GetPossessable(i);
+
+			if (Possessable.GetName() == CameraName)
+			{
+				return Possessable.GetGuid();
+			}
+		}
+
+		return FGuid();
 	}
+
+	static UObject* BuildSequencer(FString NewSequencerPath ,
+		TArray<FString> AlembicCachePaths = TArray<FString>(),
+		FString CameraImportPath = FString(),
+		TArray<FString> ToonshadeAlembicCachePaths = TArray<FString>())
+	{
+		UE_LOG(LogTemp, Log, TEXT("# Create New Sequencer Asset : %s"),*NewSequencerPath);
+
+		// Do not create sequencer if asset path already exist
+		if (UEditorAssetLibrary::DoesAssetExist(NewSequencerPath))
+		{
+			UE_LOG(LogTemp, Log, TEXT("Sequencer already exist, cannot build."));
+			return nullptr;
+		}
+		
+		// Create new sequencer
+		IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+		FString SequenceName = FPaths::GetBaseFilename(FString(NewSequencerPath));
+		FString DirSequencePath = FPaths::GetPath(FString(NewSequencerPath));
+		UObject* SequenceTemplate = UEditorAssetLibrary::LoadAsset(FString("/SimpleUtilities/Template/SeqTemplate.SeqTemplate"));
+		UObject* NewSequence =  AssetTools.DuplicateAsset(SequenceName, DirSequencePath, SequenceTemplate);
+
+		if (!NewSequence)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to duplicate Sequence Template!"));
+			return nullptr;
+		}
+
+		ULevelSequence* NewSequenceAsset = Cast<ULevelSequence>(NewSequence);
+
+		// Import Camera
+		if (!CameraImportPath.IsEmpty()) {
+			UE_LOG(LogTemp, Log, TEXT("Import Camera Target : %s"),*CameraImportPath);
+
+			FGuid CameraGuid = GetCameraGuidByName(NewSequenceAsset,TEXT("RenderCam"));
+
+			if (CameraGuid.IsValid())
+			{
+				UMovieScene* MovieScene = NewSequenceAsset->GetMovieScene();
+
+				// Create Import Settings
+				UMovieSceneUserImportFBXSettings* ImportSettings = NewObject<UMovieSceneUserImportFBXSettings>();
+				ImportSettings->bReplaceTransformTrack = true; // Essential for mapping to existing Guid
+				ImportSettings->bCreateCameras = false;        // Since you are mapping to "RenderCam"
+				ImportSettings->bReduceKeys = true;
+
+				FFBXInOutParameters OutFBXParams;
+				bool bIsReadey = MovieSceneToolHelpers::ReadyFBXForImport(CameraImportPath, ImportSettings, OutFBXParams);
+				
+				if (bIsReadey) {
+					UE_LOG(LogTemp, Log, TEXT("ReadyFBXForImport"));
+
+					TMap<FGuid, FString> ObjectBindingMap;
+					ObjectBindingMap.Add(CameraGuid, TEXT("RenderCam"));
+
+					UWorld* World = GEditor->GetEditorWorldContext().World();
+
+					if (!World) {
+						UE_LOG(LogTemp, Error, TEXT("World is null!"));
+						return nullptr;
+					}
+
+					else
+					{
+						UE_LOG(LogTemp, Log, TEXT("World is ready : %s"),*(World->GetMapName()));
+
+					}
+
+					// Guard Checks
+					if (MovieScene == nullptr)
+					{
+						UE_LOG(LogTemp, Error, TEXT("Sequence has no MovieScene data!"));
+						UE_LOG(LogTemp, Log, TEXT("Movie Scene is invalid "));
+
+					}
+
+					if (NewSequenceAsset)
+					{
+						GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()
+							->OpenEditorForAsset(NewSequenceAsset);
+
+					}
+
+					MovieSceneToolHelpers::ImportFBXIfReady(
+						World,
+						NewSequenceAsset,
+						nullptr,
+						FMovieSceneSequenceID(0),
+						ObjectBindingMap,
+						ImportSettings,
+						OutFBXParams
+					);
+				}
+
+				UE_LOG(LogTemp, Log, TEXT("Re-Import Camera Complete!"));
+
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("Import Camera Failed"));
+
+			}
+		}
+
+		return NewSequence;
+
+	}
+
+	static bool UpdateCameraInSequencer()
+	{
+	}
+
+
+
+		
+	}
+
+
+	

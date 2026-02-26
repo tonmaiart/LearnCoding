@@ -33,6 +33,10 @@
 		{
 			"Name": "AlembicImporter",
 			"Enabled": true
+		},
+		{
+			"Name": "LevelSequenceEditor",
+			"Enabled": true
 		}
 	]
 	

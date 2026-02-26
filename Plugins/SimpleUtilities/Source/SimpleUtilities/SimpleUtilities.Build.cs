@@ -17,7 +17,9 @@ public class SimpleUtilities : ModuleRules
 
         PrivateIncludePaths.AddRange(
             new string[] {
-                System.IO.Path.GetFullPath(Target.RelativeEnginePath)+"Source/Editor/Blutility/Private"
+                System.IO.Path.GetFullPath(Target.RelativeEnginePath)+"Source/Editor/Blutility/Private",
+                System.IO.Path.GetFullPath(Target.RelativeEnginePath)+"Plugins/MovieScene/LevelSequenceEditor/Source/LevelSequenceEditor/Private/Factories"
+
             }
             );
 
@@ -36,6 +38,16 @@ public class SimpleUtilities : ModuleRules
                 "GeometryCache",
                 "AlembicImporter",
                 "AlembicLibrary",
+
+                "LevelSequence",
+
+                "MovieScene",
+                "MovieSceneTracks",
+                "MovieSceneTools",
+
+                "CinematicCamera",
+                "LevelSequenceEditor",
+
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
@@ -52,7 +64,17 @@ public class SimpleUtilities : ModuleRules
 
                "GeometryCache",
                 "AlembicImporter",
-                "AlembicLibrary"
+                "AlembicLibrary",
+
+                "AssetTools",
+                "AssetRegistry",
+                //"LevelSeqeuence",
+                "LevelSequenceEditor",
+                //"MovieScene"
+
+                                //"MovieScene",
+                //"MovieSceneTracks",
+                //"MovieSceneTools",
             }
             );
 

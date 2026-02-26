@@ -11,6 +11,24 @@
 #include "SimpleUtilities.h"
 #include "EditorAssetLibrary.h"
 
+#include "Modules/ModuleManager.h"
+#include "IAssetTools.h"
+
+#include "GeometryCache.h"
+#include "AlembicImportFactory.h"
+#include "AbcImportSettings.h"
+#include "CoreMinimal.h"
+
+
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
+
+#include "MovieScene.h"
+#include "MovieSceneToolHelpers.h"
+#include "MovieScenePossessable.h"
+#include "MovieSceneToolsUserSettings.h"
+
 #pragma region ConstructWidget
 
 // Main Construct Function
@@ -189,6 +207,12 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BrowseAssetLocation))
 		);
 
+		MenuBuilder.AddMenuEntry(
+			FText::FromString("Build Sequencer"),
+			FText::FromString("Build Sequencer by include character , camera"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateSP(this, &SShotReaderWidgetTab::BuildSequencerToSelectedShot))
+		);
 
 	}
 
@@ -299,6 +323,24 @@ void SShotReaderWidgetTab::BrowseFileLocation()
 void SShotReaderWidgetTab::BrowseAssetLocation()
 {
 	DebugHeader::Print("Browse Asset Location Clicked");
+}
+
+void SShotReaderWidgetTab::BuildSequencerToSelectedShot()
+{
+	FString CameraPath = TEXT("C:\\publish\\AOA\\AOA101\\Layout\\v006\\camera_maya.fbx");
+	UObject* NewSequencer =  Utility::BuildSequencer("/Game/Sequences/AOA/AOA101/SEQ_AOA101_Test",
+			TArray<FString>(),
+			CameraPath);
+	
+	if (IsValid(NewSequencer))
+	{
+		UE_LOG(LogTemp, Log, TEXT("# This Sequencer is valid %s"), *NewSequencer->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("# Failed to build Sequencer"));
+
+	}
 }
 
 #pragma endregion

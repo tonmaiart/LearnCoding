@@ -29,6 +29,10 @@
 		{
 			"Name": "SimpleUtilities",
 			"Enabled": true
+		},
+		{
+			"Name": "LevelSequenceEditor",
+			"Enabled": true
 		}
 	]
 	
