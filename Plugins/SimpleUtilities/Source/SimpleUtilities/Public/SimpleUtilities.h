@@ -28,6 +28,7 @@
 #include "LevelSequenceEditorModule.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 
+#include "EditorFramework/AssetImportData.h"
 //#include "/*Factories*//LevelSequenceFactoryNew.h"
 //#include "LevelSequenceFactoryNew.h"
 
@@ -179,23 +180,77 @@ namespace Utility
 
 		}
 
-	static FString GetAssetImportPath(FString AssetFullPath)
+	static FString GetAssetImportPath(const FString AssetFullPath)
 	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(AssetFullPath));
 
-		if (AssetData.IsValid())
+		UObject* Asset = LoadObject<UObject>(nullptr, AssetFullPath);
+
+		if (Asset)
 		{
-			FString ImportPath;
-
-			if (AssetData.GetTagValue(TEXT("AssetImportData"), ImportPath))
+			for (TFieldIterator<FObjectProperty> PropIt(Asset->GetClass()); PropIt; ++PropIt)
 			{
-				UE_LOG(LogTemp, Log, TEXT("Get Source Path"), *ImportPath);
-				return ImportPath;
+				FObjectProperty* Prop = *PropIt;
+
+				if (Prop->PropertyClass->IsChildOf(UAssetImportData::StaticClass()))
+				{
+					UAssetImportData* ImportData = Cast<UAssetImportData>(Prop->GetObjectPropertyValue_InContainer(Asset));
+					if (ImportData)
+					{
+						FString SourceFilePath = ImportData->GetFirstFilename();
+						UE_LOG(LogTemp, Log, TEXT("Import Path Found : %s") ,*SourceFilePath);
+
+						return SourceFilePath;
+					}
+				}
+
 			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Asset Not Found to Find Re-import Path"));
+
+			return FString();
+
 		}
 
 		return FString();
+
+		//static FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		//FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(AssetFullPath));
+
+		//UE_LOG(LogTemp, Log, TEXT("- Getting Asset Import Path from: %s"), *AssetFullPath);
+
+		//if (AssetData.IsValid())
+		//{
+		//	FString SerializedImportData;
+
+
+		//	if (AssetData.GetTagValue(TEXT("AssetImportData"), SerializedImportData))
+		//	{
+
+		//		TSharedPtr<FAssetImportInfo> ImportInfo = FAssetImportInfo::FromJson(SerializedImportData);
+		//		
+		//		if (ImportInfo.IsValid() && ImportInfo ->SourceFiles.Num()>0)
+		//		{
+		//			FString ImportPath = ImportInfo->SourceFile[0].RelativesFilename;
+		//			UE_LOG(LogTemp, Log, TEXT("- Get Re-Import Path :%s "), *ImportPath);
+		//			return ImportPath;
+
+		//		}
+
+		//	}
+		//	else
+		//	{
+		//		UE_LOG(LogTemp, Log, TEXT("- This Type of Asset dont have import path tag , Cannot get re-import path from : %s"), *AssetFullPath);
+		//		return FString();
+		//	}
+		//}
+		//else
+		//{
+		//	UE_LOG(LogTemp, Log, TEXT("- Asset Data Invalid , Cannot get re-import path from : %s"), *AssetFullPath);
+		//}
+
+
 	}
 
 	static FGuid GetCameraGuidByName(ULevelSequence* InSequence, FString CameraName)

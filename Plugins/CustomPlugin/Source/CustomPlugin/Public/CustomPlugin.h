@@ -9,14 +9,15 @@
 class FCustomPluginModule : public IModuleInterface
 {
 public:
-	FString ShotRootPath = "G:\\My Drive\\Projects\\KafkaProj\\publish\\Shot";
-	FString SubFolder = "Layout";
-	FString ContentShotRootPath = "/Game/Sequences";
+	// Main Variable
+	TArray<FString> ShotRootPaths;
+	FString SubFolder;
+	FString ContentShotRootPath;
+	TMap<FString,FString> namingTypes;
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-
 #pragma region ProcessActionAlembicImporter
 
 	bool DeleteSingleAssetForAssetList(const FAssetData& AssetDataToDelete);
@@ -31,6 +32,7 @@ private:
 	TArray<FString> FolderPathsSelected;
 
 	/* Add Menu Entry Function */
+	void FetchConfiguration();
 	void InitCBMenuExtention();
 	void AddCBMenuEntry(class FMenuBuilder& MenuBuilder);
 	TSharedRef<FExtender> CustomCBMenuExtender(const TArray<FString>& SelectedPaths);

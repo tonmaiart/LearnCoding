@@ -38,7 +38,8 @@ public class CustomPlugin : ModuleRules
                 "LevelSequence",
                 "MovieScene",  
                 "MovieSceneTools",	
-                "LevelSequenceEditor"
+                "LevelSequenceEditor",
+                "DeveloperSettings"
 				// ... add other public dependencies that you statically link with here ...
 			}
             );

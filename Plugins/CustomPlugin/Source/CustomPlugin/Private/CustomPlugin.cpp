@@ -12,7 +12,7 @@
 #include "Misc/Paths.h"
 #include "SimpleUtilities.h"
 #include "CoreMinimal.h"
-
+#include "CustomPluginSettings.h"
 //#include <iostream>
 //#include <filesystem>
 #include "GenericPlatform/GenericPlatformFile.h"
@@ -23,12 +23,31 @@ void FCustomPluginModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	
+	FetchConfiguration();
 	InitCBMenuExtention();
 	RegisterAlembicImporter();
 	RegisterShotReader();
 }
 
+
 #pragma region ContentBrowserMenuExtention
+void FCustomPluginModule::FetchConfiguration()
+{
+
+
+	const UCustomPluginSettings* Settings = GetDefault<UCustomPluginSettings>();
+
+	if (Settings)
+	{
+		ShotRootPaths = Settings->ShotRootPaths;
+		SubFolder = Settings->SubFolder;
+		ContentShotRootPath = Settings->ContentShotRootPath;
+		namingTypes = Settings->namingTypes;
+	}
+	
+
+
+}	
 void FCustomPluginModule::InitCBMenuExtention()
 {
 	FContentBrowserModule& ContentBrowserModule= 
@@ -276,122 +295,136 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 {
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
-	TArray<FString> ShotListPathList;
-	TArray<FString> DirectoryContent = Utility::GetDirectoryContent(ShotRootPath, true, false);
-
-	// loop each shot main name to get shot main path
-	for (const FString& ShotMainDirPath : DirectoryContent)
-	{
-		// loop each shot name
-		DebugHeader::Print("# Directory To Search : " + ShotMainDirPath);
-		TArray<FString> ShotSubDirList = Utility::GetDirectoryContent(ShotMainDirPath,true,false);
-		ShotListPathList.Append(ShotSubDirList);
-
-		// Add Shot List Path
-		for (const FString ShotSubPath : ShotSubDirList)
-		{
-			DebugHeader::Print("- Found Sub Dir - " + ShotSubPath);
-		}
+	TArray<TSharedPtr<FShotData>> ShotDataListResult; // Used for return array of shot data
+	
+	// Debug
+	if (ShotRootPaths.IsEmpty()) {
+		UE_LOG(LogTemp, Log, TEXT("Shoot Root Paths is empty, Please Check the configuration."));
 	}
 
-	// loop for each shot list name to get shot list path
-	TArray<TSharedPtr<FShotData>> ShotDataListResult;
-
-	for (const FString& ShotListPath : ShotListPathList)
+	// Start Iterate all path in shotrootpaths
+	for (FString ShotRootPath: ShotRootPaths)
 	{
-		// Create Fasset Registry Module
+		FPaths::NormalizeDirectoryName(ShotRootPath);
+
+		UE_LOG(LogTemp, Log, TEXT("Searching Shot in %s"),*ShotRootPath);
+
+		TArray<FString> DirectoryContent = Utility::GetDirectoryContent(ShotRootPath, true, false);
+
+		// loop each shot main name to get shot main path
+		TArray<FString> ShotListPathList;
+		for (const FString& ShotMainDirPath : DirectoryContent)
+		{
+			// loop each shot name
+			DebugHeader::Print("# Directory To Search : " + ShotMainDirPath);
+			TArray<FString> ShotSubDirList = Utility::GetDirectoryContent(ShotMainDirPath,true,false);
+			ShotListPathList.Append(ShotSubDirList);
+
+			// Add Shot List Path
+			for (const FString ShotSubPath : ShotSubDirList)
+			{
+				DebugHeader::Print("- Found Sub Dir - " + ShotSubPath);
+			}
+		}
+
+		// loop for each shot list name to get shot list path
+		for (const FString& ShotListPath : ShotListPathList)
+		{
+			// Create Fasset Registry Module
 		
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		// Get Lastest Version Folder
-		FString ShotListExtraPath = FPaths::Combine(ShotListPath,SubFolder);
-		Utility::FVersionResult LastestVersionData = Utility::GetLastestVersionFolder(ShotListExtraPath);
-		FString LastestVersionPath = LastestVersionData.Path;
+			// Get Lastest Version Folder
+			FString ShotListExtraPath = FPaths::Combine(ShotListPath,SubFolder);
+			Utility::FVersionResult LastestVersionData = Utility::GetLastestVersionFolder(ShotListExtraPath);
+			FString LastestVersionPath = LastestVersionData.Path;
 
-		DebugHeader::Print("- Shot List Version Path : " + ShotListPath);
-		DebugHeader::Print("- Get Lastest Version Path : " + LastestVersionPath);
-
-		if (LastestVersionPath.IsEmpty())
-		{
-			UE_LOG(LogTemp, Log, TEXT("Skipped Shot :%s because not found any version folder."), *LastestVersionPath);
-			continue; // Skip this folder because have no version folder detected
-		}
-
-		// Get File of given lastest path
-		TArray<FString> FileList = Utility::GetDirectoryContent(LastestVersionPath,false,true);
-
-		for (const FString& ShotFile : FileList)
-		{
-			//Create FShotData for return
-			TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
-
-			FString ShotName = FPaths::GetBaseFilename(ShotListPath);
-			FString ShotPrefix = ShotName.Left(3);
-			FString FileBaseName = FPaths::GetBaseFilename(ShotFile);
-			FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName);
-			FString ContentAssetFilePath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName, FileBaseName);
-			FString CurrentVersionFolder = FPaths::GetPath(ShotFile).Right(3);
-			FString LastestVersionFolder = LastestVersionPath.Right(3);
-			int32 LastestVersion = FCString::Atoi(*LastestVersionFolder);
-			int32 CurrentVersion = FCString::Atoi(*CurrentVersionFolder);
-			FString GetPolishStateText;
-
-			FString CurrentImportPath = Utility::GetAssetImportPath(ContentAssetFilePath);
-
-			FString ShortenPath = CurrentImportPath;
-			FString BasePath = ShotRootPath;
-			FPaths::NormalizeFilename(ShortenPath);
-			FPaths::NormalizeFilename(BasePath);
-			FPaths::MakePathRelativeTo(ShortenPath, *BasePath);
-
-			// Update FShotData Attribute
-			// Shot Info
-			CurrentShotData->ShotName = ShotName;
-			CurrentShotData->ShotMainName = ShotPrefix;
-
-			// Current Asset Data
-			CurrentShotData->AssetName = FileBaseName;
-			CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
-			CurrentShotData->ContentAssetDirPath = ContentAssetDirPath;
-			CurrentShotData->ContentAssetFilePath = ContentAssetFilePath;
-			CurrentShotData->CurrentVersion = CurrentVersion;
-			CurrentShotData->IsAssetExists = UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath);
-			CurrentShotData->CurrentImportPath = CurrentImportPath;
-			CurrentShotData->CurrentImportPathShorten = ShortenPath;
-
-			// Lastest in Directory Info
-			CurrentShotData->LastestFilePath = ShotFile;
-			CurrentShotData->LastestVersion = LastestVersion;
-
-			// Create Polish Text
-			if (!CurrentShotData->IsAssetExists)
+			if (LastestVersionPath.IsEmpty())
 			{
-				GetPolishStateText = FString::Printf(TEXT("%d (Not Loaded)"), LastestVersion);
-			}
-			else if (CurrentVersion < LastestVersion)
-			{
-				GetPolishStateText = FString::Printf(TEXT("%d -> %d"), CurrentVersion, LastestVersion);
-			}
-			else if (CurrentVersion == LastestVersion)
-			{
-				GetPolishStateText = FString::Printf(TEXT("%d"), LastestVersion);
-
+				UE_LOG(LogTemp, Log, TEXT("Skipped Shot :%s because not found any version folder."), *LastestVersionPath);
+				continue; // Skip this folder because have no version folder detected
 			}
 
-			// Create Polish State text
-			CurrentShotData->PolishStateText = GetPolishStateText;
+			// Get File of given lastest path
+			TArray<FString> FileList = Utility::GetDirectoryContent(LastestVersionPath,false,true);
 
+			for (const FString& ShotFile : FileList)
+			{
+				//Create FShotData for return
+				TSharedPtr<FShotData> CurrentShotData = MakeShared<FShotData>();
 
-			// Add to Array
-			ShotDataListResult.Add(CurrentShotData);
+				FString ShotName = FPaths::GetBaseFilename(ShotListPath);
+				FString ShotPrefix = ShotName.Left(3);
+				FString FileBaseName = FPaths::GetBaseFilename(ShotFile);
+				FString ContentAssetDirPath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName);
+				FString ContentAssetFilePath = FPaths::Combine(ContentShotRootPath, ShotPrefix, ShotName, FileBaseName);
+				
+				FString LastestVersionFolder = LastestVersionPath.Right(3);
+				int32 LastestVersion = FCString::Atoi(*LastestVersionFolder);
+
+				FString CurrentImportPath = Utility::GetAssetImportPath(ContentAssetFilePath);
+				FString CurrentVersionFolder = FPaths::GetPath(CurrentImportPath).Right(3);
+				int32 CurrentVersion = FCString::Atoi(*CurrentVersionFolder);
+
+				
+				FString ShortenPath = CurrentImportPath;
+				FString BasePath = ShotRootPath;
+
+				if (!CurrentImportPath.IsEmpty())
+				{
+					FPaths::NormalizeFilename(ShortenPath);
+					FPaths::NormalizeFilename(BasePath);
+					FPaths::MakePathRelativeTo(ShortenPath, *BasePath);
+				}
+
+				FString GetPolishStateText;
+
+				// Update FShotData Attribute
+				// Shot Info
+				CurrentShotData->ShotName = ShotName;
+				CurrentShotData->ShotMainName = ShotPrefix;
+
+				// Current Asset Data
+				CurrentShotData->AssetName = FileBaseName;
+				CurrentShotData->CurrentAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(ContentAssetFilePath));
+				CurrentShotData->ContentAssetDirPath = ContentAssetDirPath;
+				CurrentShotData->ContentAssetFilePath = ContentAssetFilePath;
+				CurrentShotData->CurrentVersion = CurrentVersion;
+				CurrentShotData->IsAssetExists = UEditorAssetLibrary::DoesAssetExist(ContentAssetFilePath);
+				CurrentShotData->CurrentImportPathShorten = ShortenPath;
+
+				// Lastest in Directory Info
+				CurrentShotData->LastestFilePath = ShotFile;
+				CurrentShotData->LastestVersion = LastestVersion;
+
+				// Create Polish Text
+				if (!CurrentShotData->IsAssetExists)
+				{
+					GetPolishStateText = FString::Printf(TEXT("%d (Not Loaded)"), LastestVersion);
+				}
+				else if (CurrentVersion < LastestVersion)
+				{
+					GetPolishStateText = FString::Printf(TEXT("%d -> %d"), CurrentVersion, LastestVersion);
+				}
+				else if (CurrentVersion == LastestVersion)
+				{
+					GetPolishStateText = FString::Printf(TEXT("%d"), LastestVersion);
+
+				}
+
+				// Create Polish State text
+				CurrentShotData->PolishStateText = GetPolishStateText;
+
+				// Add to Array
+				ShotDataListResult.Add(CurrentShotData);
 			
-			UE_LOG(LogTemp, Log, TEXT("Base Path : %s , Full Path : %s , ShortenPath : %s , IsAssetExists : %s"),
-				*BasePath, *ShotFile, *ShortenPath,*LexToString(CurrentShotData->IsAssetExists));
-			UE_LOG(LogTemp, Log, TEXT("Content Browser Asset Path : %s"),*ContentAssetFilePath);
-		}
-
-		// 
-
+				UE_LOG(LogTemp, Log, TEXT("# Shot File Found : %s"),*ShotFile);
+				UE_LOG(LogTemp, Log, TEXT("- Base Path : %s , Full Path : %s , ShortenPath : %s , IsAssetExists : %s"),
+					*BasePath, *ShotFile, *ShortenPath,*LexToString(CurrentShotData->IsAssetExists));
+				UE_LOG(LogTemp, Log, TEXT("- Current Import Path : %s"), *CurrentImportPath);
+				UE_LOG(LogTemp, Log, TEXT("- Content Browser Asset Path : %s"),*ContentAssetFilePath);
+			}
+	}
 	}
 	return ShotDataListResult;
 }

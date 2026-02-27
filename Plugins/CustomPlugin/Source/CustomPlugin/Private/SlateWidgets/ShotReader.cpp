@@ -34,6 +34,8 @@
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
 
+#include "EditorReimportHandler.h"
+
 #pragma region ConstructWidget
 
 // Main Construct Function
@@ -273,14 +275,13 @@ void SShotReaderWidgetTab::ReimportSelectedItem()
 
 		for (TSharedPtr<FShotData> item : SelectedItems)
 		{
+			FString ContentPath = item->ContentAssetFilePath;
+			FString NewSourcePath = item->LastestFilePath;
+			UObject* Asset = LoadObject<UObject>(nullptr, ContentPath);
 
-			FString DirBrowse = FPaths::GetPath(item->LastestFilePath);
-			FPlatformProcess::ExploreFolder(*(item->LastestFilePath));
-			//Utility::CheckAlembicImportPath();
-			DebugHeader::Print("Browse File Location" + DirBrowse);
+			FReimportManager::Instance()->ReimportAsync(Asset, false, true, NewSourcePath);
 
-
-
+			ReloadAll();
 		}
 
 	}
