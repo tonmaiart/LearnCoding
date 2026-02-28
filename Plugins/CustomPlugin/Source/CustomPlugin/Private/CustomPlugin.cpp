@@ -33,18 +33,32 @@ void FCustomPluginModule::StartupModule()
 #pragma region ContentBrowserMenuExtention
 void FCustomPluginModule::FetchConfiguration()
 {
+	UE_LOG(LogTemp, Log, TEXT("## Fetching Configuration from Settings ## "));
 
 
 	const UCustomPluginSettings* Settings = GetDefault<UCustomPluginSettings>();
 
 	if (Settings)
 	{
+		UE_LOG(LogTemp, Log, TEXT("- Settings Founded"));
+
 		ShotRootPaths = Settings->ShotRootPaths;
 		SubFolder = Settings->SubFolder;
 		ContentShotRootPath = Settings->ContentShotRootPath;
+		//Settings->namingTypes;
 		namingTypes = Settings->namingTypes;
+
+		for (const TPair<FString, FString>& Pair : namingTypes)
+		{
+			// Access the Key and Value using Pair.Key and Pair.Value
+			UE_LOG(LogTemp, Log, TEXT("Key: %s | Value: %s"), *Pair.Key, *Pair.Value);
+		}
 	}
-	
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("- Settings Not Found!"));
+
+	}
 
 
 }	
@@ -404,7 +418,7 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 				}
 				else if (CurrentVersion < LastestVersion)
 				{
-					GetPolishStateText = FString::Printf(TEXT("%d -> %d"), CurrentVersion, LastestVersion);
+					GetPolishStateText = FString::Printf(TEXT("%d < %d >"), LastestVersion,CurrentVersion );
 				}
 				else if (CurrentVersion == LastestVersion)
 				{
@@ -417,12 +431,16 @@ TArray<TSharedPtr<FShotData>> FCustomPluginModule::GetShotData()
 
 				// Add to Array
 				ShotDataListResult.Add(CurrentShotData);
-			
-				UE_LOG(LogTemp, Log, TEXT("# Shot File Found : %s"),*ShotFile);
-				UE_LOG(LogTemp, Log, TEXT("- Base Path : %s , Full Path : %s , ShortenPath : %s , IsAssetExists : %s"),
-					*BasePath, *ShotFile, *ShortenPath,*LexToString(CurrentShotData->IsAssetExists));
-				UE_LOG(LogTemp, Log, TEXT("- Current Import Path : %s"), *CurrentImportPath);
-				UE_LOG(LogTemp, Log, TEXT("- Content Browser Asset Path : %s"),*ContentAssetFilePath);
+				
+				// Debugig
+				if (false) {
+					UE_LOG(LogTemp, Log, TEXT("# Shot File Found : %s"), *ShotFile);
+					UE_LOG(LogTemp, Log, TEXT("- Base Path : %s , Full Path : %s , ShortenPath : %s , IsAssetExists : %s"),
+						*BasePath, *ShotFile, *ShortenPath, *LexToString(CurrentShotData->IsAssetExists));
+					UE_LOG(LogTemp, Log, TEXT("- Current Import Path : %s"), *CurrentImportPath);
+					UE_LOG(LogTemp, Log, TEXT("- Content Browser Asset Path : %s"), *ContentAssetFilePath);
+				}
+
 			}
 	}
 	}
@@ -438,6 +456,7 @@ TSharedRef<SDockTab> FCustomPluginModule::OnSpawnShotReader(const FSpawnTabArgs&
 		[
 			SNew(SShotReaderWidgetTab)
 				.ShotDataList(FCustomPluginModule::GetShotData())
+				.namingTypes(namingTypes)
 		];
 }
 

@@ -175,7 +175,6 @@ namespace Utility
 			}
 
 
-
 			return nullptr;
 
 		}
@@ -197,7 +196,6 @@ namespace Utility
 					if (ImportData)
 					{
 						FString SourceFilePath = ImportData->GetFirstFilename();
-						UE_LOG(LogTemp, Log, TEXT("Import Path Found : %s") ,*SourceFilePath);
 
 						return SourceFilePath;
 					}
@@ -207,8 +205,6 @@ namespace Utility
 		}
 		else
 		{
-			UE_LOG(LogTemp, Log, TEXT("Asset Not Found to Find Re-import Path"));
-
 			return FString();
 
 		}

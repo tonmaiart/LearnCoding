@@ -1,13 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CustomPlugin.h"
 
 #include "SlateWidgets/ShotReader.h"
 #include "DebugHeader.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "HAL/PlatformProcess.h"
-//#include "AbcImportFactory.h"
 #include "AssetToolsModule.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "SimpleUtilities.h"
@@ -20,7 +18,6 @@
 #include "AlembicImportFactory.h"
 #include "AbcImportSettings.h"
 #include "CoreMinimal.h"
-
 
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
@@ -36,17 +33,48 @@
 
 #include "EditorReimportHandler.h"
 
-#pragma region ConstructWidget
 
-// Main Construct Function
+#pragma region ConstructWidget
 void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 {
 	// Can Use Keyboard for controlling
 	bCanSupportFocus = true;
 
 	ShotDataList = InArgs._ShotDataList;
+	ShotDataListBase = InArgs._ShotDataList;
+	namingTypes = InArgs._namingTypes;
 
-	// Define
+	SelectedSequenceName = MakeShared<FString>("--- All ---");
+	SelectedFilterType = MakeShared<FString>("--- All ---");
+
+	ListComboBoxTypeFilter.Empty();
+	ListComboBoxTypeFilter.Add(MakeShared<FString>("--- All ---"));
+	for (TPair<FString, FString>& Pair : namingTypes)
+	{
+		TSharedPtr<FString> PtrValue = MakeShared<FString>(Pair.Value);
+		ListComboBoxTypeFilter.Add(PtrValue);
+	}
+	
+
+	// Sequence Name List
+	SequenceNameList.Empty();
+	SequenceNameList.Add(MakeShared<FString>("--- All ---"));
+	TSet<FString> SeenNames;
+
+	for (TSharedPtr<FShotData> ShotData : ShotDataListBase)
+	{
+		FString ShotName = ShotData->ShotName;
+
+		if (SeenNames.Contains(ShotName)) continue;
+			
+		SeenNames.Add(ShotName);
+
+		TSharedPtr<FString> PtrShotName = MakeShared<FString>(ShotName);
+		SequenceNameList.Add(PtrShotName);
+
+	}
+
+	// Define Font
 	FSlateFontInfo TitleTextFont = GetEmbossedTextFont();
 	TitleTextFont.Size = 20;
 
@@ -58,46 +86,106 @@ void SShotReaderWidgetTab::Construct(const FArguments& InArgs)
 			// Create Vertical Box
 			SNew(SVerticalBox)
 				
-				// Title Box Name
+				// Top Bar Name
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					SNew(STextBlock)
-						.Text(FText::FromString(TEXT("Shot Reader")))
-						.Font(TitleTextFont)
-						.Justification(ETextJustify::Center)
-						.ColorAndOpacity(FColor::White)
+						// Shot Filter
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+							.AutoWidth()
+							.VAlign(VAlign_Center)
 
+						[
+							SNew(STextBlock)
+								.Text(FText::FromString("Shot Name"))
+								.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+								.Margin(FMargin(5.0f, 2.0f, 5.0f, 2.0f))
+						]
+
+						
+						+ SHorizontalBox::Slot()
+						.HAlign(HAlign_Left)
+						.VAlign(VAlign_Center)
+
+						[
+							SNew(SBox)
+								.WidthOverride(200)
+								[
+									SNew(SComboBox<TSharedPtr<FString>>)
+										.OnGenerateWidget(this, &SShotReaderWidgetTab::OnGenerateComboSequenceName)
+										.OptionsSource(&SequenceNameList)
+										.OnSelectionChanged(this, &SShotReaderWidgetTab::OnComboSequenceSelectionChanged)
+
+										[
+											SNew(STextBlock)
+												.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+												.Margin(FMargin(5.0f, 2.0f, 5.0f, 2.0f))
+												.Text_Lambda([this]() {
+												return SelectedSequenceName.IsValid() ? FText::FromString(*SelectedSequenceName) : FText::FromString("--- All ---");
+													})
+										]
+								]
+
+						]
+
+						// Type Filter
+						+ SHorizontalBox::Slot()
+							.AutoWidth()
+							.VAlign(VAlign_Center)
+							[
+								SNew(STextBlock)
+									.Text(FText::FromString("File Type"))
+									.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+									.Margin(FMargin(5.0f, 2.0f, 5.0f, 2.0f))
+							]
+
+						+ SHorizontalBox::Slot()
+							.HAlign(HAlign_Left)
+							.VAlign(VAlign_Center)
+							[
+								SNew(SBox)
+									.WidthOverride(200.f)[
+										SNew(SComboBox<TSharedPtr<FString>>)
+											.OnGenerateWidget(this, &SShotReaderWidgetTab::OnGenerateComboFilterTypeWidget)
+											.OptionsSource(&ListComboBoxTypeFilter)
+											.OnSelectionChanged(this, &SShotReaderWidgetTab::OnComboSelectionChanged)
+									
+											[
+												SNew(STextBlock)
+													.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+													.Margin(FMargin(5.0f, 2.0f, 5.0f, 2.0f))
+													.Text_Lambda([this]() {
+													return SelectedFilterType.IsValid() ? FText::FromString(*SelectedFilterType) : FText::FromString("--- All ---");
+														})
+											]
+									]
+							]
+
+						// Reload Button
+						+ SHorizontalBox::Slot()
+							.FillWidth(2.0f)
+							.HAlign(HAlign_Right)
+							[
+								SNew(SButton)
+									.OnClicked(this, &SShotReaderWidgetTab::OnReloadButtonClicked)
+
+								[
+									SNew(STextBlock)
+										.Text(FText::FromString("Reload"))
+										.Font(FCoreStyle::Get().GetFontStyle("NormalFont"))
+										.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
+										.Margin(FMargin(5.0f, 2.0f, 5.0f, 2.0f))
+
+								]
+
+							]
 				]
 
 				// SListView
 				+ SVerticalBox::Slot()
 				[
 					SShotReaderWidgetTab::ConstructAssetListView()
-				]
-
-				//Add Reload Button
-				+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0,10,0,0)
-					.HAlign(HAlign_Right)
-
-				[
-					SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						
-						[
-							SNew(SButton)
-								[
-									SNew(STextBlock)
-										.Text(FText::FromString("Reload"))
-										.Font(FCoreStyle::Get().GetFontStyle("NormalFont")) 
-										.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12))
-								]
-								.OnClicked(this, &SShotReaderWidgetTab::OnReloadButtonClicked)
-
-						]
 				]
 		];
 }
@@ -144,6 +232,9 @@ TSharedRef<SListView<TSharedPtr<FShotData>>> SShotReaderWidgetTab::ConstructAsse
 	
 }
 
+#pragma endregion
+
+#pragma region BindingWidgetFunction
 TSharedRef<ITableRow> SShotReaderWidgetTab::OnGeneratedRowAssetList(TSharedPtr<FShotData> ShotDataStruct, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	TSharedRef<ITableRow> GeneratedRow = SNew(STableRow<TSharedRef<FShotData>>, OwnerTable)
@@ -260,6 +351,66 @@ TSharedPtr<SWidget> SShotReaderWidgetTab::OnGeneratedContextMenu()
 	return MenuBuilder.MakeWidget();
 }
 
+TSharedRef<SWidget> SShotReaderWidgetTab::OnGenerateComboFilterTypeWidget(TSharedPtr<FString> InItem)
+{
+	UE_LOG(LogTemp, Log, TEXT("Genreating Combo bOX"));
+	return SNew(STextBlock)
+		.Text(FText::FromString(*InItem))
+		.Margin(FMargin(4.0f, 4.0f));
+}
+
+TSharedRef<SWidget> SShotReaderWidgetTab::OnGenerateComboSequenceName(TSharedPtr<FString> InItem)
+{
+	return SNew(STextBlock)
+		.Text(FText::FromString(*InItem))
+		.Margin(FMargin(4.0f, 4.0f));
+}
+
+
+
+void SShotReaderWidgetTab::OnComboSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
+{
+	if (NewSelection.IsValid())
+	{
+		SelectedFilterType = NewSelection;
+		SShotReaderWidgetTab::UpdateShotListFilterWidget();
+
+	}
+
+}
+
+void SShotReaderWidgetTab::OnComboSequenceSelectionChanged(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
+{
+	if (NewSelection.IsValid())
+	{
+		SelectedSequenceName = NewSelection;
+		SShotReaderWidgetTab::UpdateShotListFilterWidget();
+
+	}
+
+}
+
+FReply SShotReaderWidgetTab::OnReloadButtonClicked()
+{
+	ReloadAll();
+	UpdateShotListFilter();
+	UE_LOG(LogTemp, Log, TEXT("## Reloaded, Debugging naming Types ##"));
+
+	for (const TPair<FString, FString>& Pair : namingTypes)
+	{
+		FString CurrentKey = Pair.Key;
+		FString CurrentValue = Pair.Value;
+		UE_LOG(LogTemp, Log, TEXT("Key: %s, Value: %s"), *CurrentKey, *CurrentValue);
+	}
+
+
+	return FReply::Handled();
+
+}
+
+#pragma endregion
+
+#pragma region RightClickMenu
 void SShotReaderWidgetTab::ReimportSelectedItem()
 {
 	if (!ConstructedAssetListView.IsValid()) return;
@@ -420,12 +571,16 @@ void SShotReaderWidgetTab::BuildSequencerToSelectedShot()
 	}
 }
 
+#pragma endregion
+
+#pragma region Misc
 void SShotReaderWidgetTab::ReloadAll()
 {
 	FCustomPluginModule& CustomModule = FModuleManager::GetModuleChecked<FCustomPluginModule>("CustomPlugin");
 
 	// Update Array Data
-	ShotDataList = CustomModule.GetShotData();
+	//ShotDataList = CustomModule.GetShotData();
+	ShotDataListBase = CustomModule.GetShotData();
 
 	// Refresh the list view
 	if (ConstructedAssetListView.IsValid())
@@ -434,11 +589,120 @@ void SShotReaderWidgetTab::ReloadAll()
 	}
 }
 
-FReply SShotReaderWidgetTab::OnReloadButtonClicked()
+void SShotReaderWidgetTab::UpdateShotListFilter()
 {
-	ReloadAll();
 
-	return FReply::Handled();
+	if (!SelectedFilterType.IsValid())
+	{
+		UE_LOG(LogTemp, Log, TEXT("## Updating Shot Data List Filter Failed , SelectedFilterType Pointer still valid ##"));
+
+		return;
+
+	}
+
+	if (!SelectedSequenceName.IsValid())
+	{
+		UE_LOG(LogTemp, Log, TEXT("## Updating Shot Data List Filter Failed , SelectedSequenceName Pointer still valid ##"));
+
+		return;
+
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("## Updating Shot Data List Filter ##"));
+	UE_LOG(LogTemp, Log, TEXT("- Selected Filter Shot Name : %s"), *(*SelectedFilterType));
+	UE_LOG(LogTemp, Log, TEXT("- Selected Filter Type : %s"), *(*SelectedSequenceName));
+
+	// If Shot List Filter Not Select Anythings
+	//if (!ListComboBoxTypeFilter.Contains(SelectedFilterType))
+	//{
+	//	UE_LOG(LogTemp, Log, TEXT("- Selected Filter Types is invalid"));
+	//	return;
+	//}
+
+	//if (!SequenceNameList.Contains(SelectedSequenceName))
+	//{
+	//	UE_LOG(LogTemp, Log, TEXT("- Selected Shot Name is invalid"));
+	//	return;
+	//}
+
+
+
+	// If Shot LIst Filter Select Somethings
+	TArray<TSharedPtr<FShotData>> ResultShotNameList;
+	TArray<TSharedPtr<FShotData>> ResultFileTypeList;
+
+
+
+	// Filter Naming Convention
+	TArray<TSharedPtr<FShotData>> ShotDataListBaseDefault = ShotDataListBase;
+
+	if (*SelectedFilterType == "--- All ---")
+	{
+		ResultFileTypeList = ShotDataListBaseDefault;
+	}
+	else
+	{
+		// Get Naming Convention
+		FString NamingConvention;
+
+		for (const TPair<FString, FString> Pair : namingTypes)
+		{
+			if (Pair.Value == *SelectedFilterType)
+			{
+				NamingConvention = Pair.Key;
+				UE_LOG(LogTemp, Log, TEXT("- Naming Convention is : %s"), *(Pair.Key));
+
+			}
+		}
+
+		if (NamingConvention.IsEmpty())
+		{
+			UE_LOG(LogTemp, Log, TEXT("Naming Convention Not Found"));
+			return;
+		}
+
+		for (TSharedPtr<FShotData> ShotData : ShotDataListBaseDefault)
+		{
+			const FString FileName = FPaths::GetCleanFilename(ShotData->LastestFilePath);
+
+
+			if (FileName.MatchesWildcard(NamingConvention))
+			{
+				ResultFileTypeList.Add(ShotData);
+				UE_LOG(LogTemp, Log, TEXT("- Matching : %s"), *FileName);
+
+			}
+		}
+	}
+
+	// Filter Shot Name
+	const FString ShotName = *SelectedSequenceName;
+
+	if (ShotName == "--- All ---")
+	{
+		ResultShotNameList = ResultFileTypeList;
+
+	}
+	else
+	{
+		for (TSharedPtr<FShotData> ShotData : ResultFileTypeList)
+		{
+			if (ShotData->ShotName == ShotName)
+			{
+				ResultShotNameList.Add(ShotData);
+			}
+		}
+	}
+
+	// Update New Shot Data to List
+	ShotDataList = ResultShotNameList;
+
+}
+
+void SShotReaderWidgetTab::UpdateShotListFilterWidget()
+{
+	UpdateShotListFilter();
+	ReloadAll();
 }
 
 #pragma endregion
