@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CustomPlugin : ModuleRules
+public class UkoreToolkit : ModuleRules
 {
-	public CustomPlugin(ReadOnlyTargetRules Target) : base(Target)
+	public UkoreToolkit(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -13,60 +13,60 @@ public class CustomPlugin : ModuleRules
 				// ... add public include paths required here ...
 			}
 			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
+
+
+        PrivateIncludePaths.AddRange(
+            new string[] {
                 System.IO.Path.GetFullPath(Target.RelativeEnginePath)+"Source/Editor/Blutility/Private"
             }
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
+            );
+
+
+        PublicDependencyModuleNames.AddRange(
+            new string[]
+            {
                 "ContentBrowser",
                 "AssetRegistry",
                 "Core",
                 "Blutility",
-				"EditorScriptingUtilities",
-				"UnrealEd",
-                "SimpleUtilities",
-				"InputCore",
+                "EditorScriptingUtilities",
+                "UnrealEd",
+                "InputCore",
                 "Slate",
                 "AssetRegistry",
                 "LevelSequence",
-                "MovieScene",  
-                "MovieSceneTools",	
+                "MovieScene",
+                "MovieSceneTools",
                 "LevelSequenceEditor",
-                "DeveloperSettings"
+                "DeveloperSettings",
+                "ToolMenus"
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
-			
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
+
+
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "CoreUObject",
+                "Engine",
+                "Slate",
+                "SlateCore",
                 "EditorScriptingUtilities",
-				"UnrealEd",
+                "UnrealEd",
                 "AlembicLibrary",
                 "AlembicImporter",
 
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
+
+
+        DynamicallyLoadedModuleNames.AddRange(
+            new string[]
+            {
 				// ... add any modules that your module loads dynamically here ...
 			}
-			);
-	}
+            );
+    }
 }

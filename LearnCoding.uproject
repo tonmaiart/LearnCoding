@@ -33,6 +33,14 @@
 		{
 			"Name": "USDImporter",
 			"Enabled": true
+		},
+		{
+			"Name": "CustomPlugin",
+			"Enabled": false
+		},
+		{
+			"Name": "SimpleUtilities",
+			"Enabled": false
 		}
 	]
 }

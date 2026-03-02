@@ -2,8 +2,8 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "SimpleUtilities",
-	"Description": "Use for simplifly normal utilites",
+	"FriendlyName": "UkoreToolkit",
+	"Description": "Tool for improve workflows.",
 	"Category": "Other",
 	"CreatedBy": "Natchapon Srisuk",
 	"CreatedByURL": "",
@@ -16,7 +16,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "SimpleUtilities",
+			"Name": "UkoreToolkit",
 			"Type": "Editor",
 			"LoadingPhase": "PreDefault"
 		}
@@ -27,17 +27,12 @@
 			"Enabled": true
 		},
 		{
-			"Name": "GeometryCache",
+			"Name": "LevelSequenceEditor",
 			"Enabled": true
 		},
 		{
 			"Name": "AlembicImporter",
 			"Enabled": true
-		},
-		{
-			"Name": "LevelSequenceEditor",
-			"Enabled": true
 		}
 	]
-	
 }

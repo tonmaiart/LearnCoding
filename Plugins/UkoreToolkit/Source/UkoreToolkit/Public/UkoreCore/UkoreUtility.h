@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -14,8 +14,6 @@
 
 #include "EditorAssetLibrary.h"
 
-
-
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
@@ -29,8 +27,11 @@
 #include "Subsystems/AssetEditorSubsystem.h"
 
 #include "EditorFramework/AssetImportData.h"
-//#include "/*Factories*//LevelSequenceFactoryNew.h"
-//#include "LevelSequenceFactoryNew.h"
+
+#include "Misc/MessageDialog.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
+
 
 class ULevelSequence;
 
@@ -49,7 +50,7 @@ public:
 
 
 namespace Utility
-{ 
+{
 	struct FVersionResult
 	{
 		FString Path = "";
@@ -58,45 +59,47 @@ namespace Utility
 	};
 
 	static TArray<FString> GetDirectoryContent(FString DirectoryPath, bool GetDir, bool GetFile)
-{
-	// Prepare the output array
-	TArray<FString> FoundList;
-	TArray<FString> ResultList;
-
-	// Define the visitor
-	struct FLocalVisitor : public IPlatformFile::FDirectoryVisitor
 	{
-		TArray<FString>& OutArray;
-		FLocalVisitor(TArray<FString>& InArray) : OutArray(InArray) {}
+		// Prepare the output array
+		TArray<FString> FoundList;
+		TArray<FString> ResultList;
 
-		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
+		// Define the visitor
+		struct FLocalVisitor : public IPlatformFile::FDirectoryVisitor
 		{
-			OutArray.Add(FilenameOrDirectory);
-			return true;
-		}
-	};
+			TArray<FString>& OutArray;
+			FLocalVisitor(TArray<FString>& InArray) : OutArray(InArray) {}
 
-	// Execute Search
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	FLocalVisitor Visitor(FoundList);
-	PlatformFile.IterateDirectory(*DirectoryPath, Visitor);
+			virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
+			{
+				OutArray.Add(FilenameOrDirectory);
+				return true;
+			}
+		};
 
-	// Filter
-	for (const FString item : FoundList)
-	{
-		if (PlatformFile.DirectoryExists(*item) && GetDir == true)
+		// Execute Search
+		IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+		FLocalVisitor Visitor(FoundList);
+		PlatformFile.IterateDirectory(*DirectoryPath, Visitor);
+
+		// Filter
+		for (const FString item : FoundList)
 		{
-			ResultList.Add(item);
+			if (PlatformFile.DirectoryExists(*item) && GetDir == true)
+			{
+				ResultList.Add(item);
+			}
+			else if (PlatformFile.FileExists(*item) && GetFile == true)
+			{
+				ResultList.Add(item);
+			}
 		}
-		else if (PlatformFile.FileExists(*item) && GetFile == true)
-		{
-			ResultList.Add(item);
-		}
+
+		ResultList.Sort();
+
+		return ResultList;
 	}
 
-	return ResultList;
-}
-	
 	/* Get Lastest Folder of Given Directory Path */
 	static FVersionResult GetLastestVersionFolder(const FString ParentPath)
 	{
@@ -117,13 +120,13 @@ namespace Utility
 			{
 				// Get Path
 				VersionFolder.Add(FullPath);
-				
+
 				// Get Version
 				FString VersionString = Matcher.GetCaptureGroup(1);
 				AllVersion.Add(FCString::Atoi(*VersionString));
 			}
 		}
-		
+
 		FVersionResult ReturnResult;
 
 		// Return Empty String if nothing found
@@ -142,42 +145,42 @@ namespace Utility
 		}
 	}
 
-	
+
 
 
 	static UGeometryCache* ImportAlembicFile(FString SourceFilePath, FString DestinationPath)
-		{
-			FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	{
+		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-			// Create AbcFactory
-			UAlembicImportFactory* AbcFactory = NewObject<UAlembicImportFactory>();
+		// Create AbcFactory
+		UAlembicImportFactory* AbcFactory = NewObject<UAlembicImportFactory>();
 
-			//Setting Import Configuration
-			AbcFactory->ImportSettings->ImportType = EAlembicImportType::GeometryCache;
-			AbcFactory->ImportSettings->GeometryCacheSettings.bFlattenTracks = true;
+		//Setting Import Configuration
+		AbcFactory->ImportSettings->ImportType = EAlembicImportType::GeometryCache;
+		AbcFactory->ImportSettings->GeometryCacheSettings.bFlattenTracks = true;
 
-			//Close Ui (Slient Import)
-			AbcFactory->bEditAfterNew = false;
-			AbcFactory->bShowOption = false;
+		//Close Ui (Slient Import)
+		AbcFactory->bEditAfterNew = false;
+		AbcFactory->bShowOption = false;
 
-			// Import Automate
-			TArray<FString> FileNames;
-			FileNames.Add(SourceFilePath);
+		// Import Automate
+		TArray<FString> FileNames;
+		FileNames.Add(SourceFilePath);
 
-			UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
-			ImportData->Filenames.Add(SourceFilePath);
-			ImportData->DestinationPath = DestinationPath;
+		UAutomatedAssetImportData* ImportData = NewObject<UAutomatedAssetImportData>();
+		ImportData->Filenames.Add(SourceFilePath);
+		ImportData->DestinationPath = DestinationPath;
 
-			TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
+		TArray<UObject*> ImportedAssets = AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
 
-			for (UObject* asset : ImportedAssets) {
-				UEditorAssetLibrary::SaveAsset(asset->GetPathName(), false);
-			}
-
-
-			return nullptr;
-
+		for (UObject* asset : ImportedAssets) {
+			UEditorAssetLibrary::SaveAsset(asset->GetPathName(), false);
 		}
+
+
+		return nullptr;
+
+	}
 
 	static FString GetAssetImportPath(const FString AssetFullPath)
 	{
@@ -268,12 +271,12 @@ namespace Utility
 		return FGuid();
 	}
 
-	static UObject* BuildSequencer(FString NewSequencerPath ,
+	static UObject* BuildSequencer(FString NewSequencerPath,
 		TArray<FString> AlembicCachePaths = TArray<FString>(),
 		FString CameraImportPath = FString(),
 		TArray<FString> ToonshadeAlembicCachePaths = TArray<FString>())
 	{
-		UE_LOG(LogTemp, Log, TEXT("# Create New Sequencer Asset : %s"),*NewSequencerPath);
+		UE_LOG(LogTemp, Log, TEXT("# Create New Sequencer Asset : %s"), *NewSequencerPath);
 
 		// Do not create sequencer if asset path already exist
 		if (UEditorAssetLibrary::DoesAssetExist(NewSequencerPath))
@@ -281,13 +284,13 @@ namespace Utility
 			UE_LOG(LogTemp, Log, TEXT("Sequencer already exist, cannot build."));
 			return nullptr;
 		}
-		
+
 		// Create new sequencer
 		IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 		FString SequenceName = FPaths::GetBaseFilename(FString(NewSequencerPath));
 		FString DirSequencePath = FPaths::GetPath(FString(NewSequencerPath));
 		UObject* SequenceTemplate = UEditorAssetLibrary::LoadAsset(FString("/SimpleUtilities/Template/SeqTemplate.SeqTemplate"));
-		UObject* NewSequence =  AssetTools.DuplicateAsset(SequenceName, DirSequencePath, SequenceTemplate);
+		UObject* NewSequence = AssetTools.DuplicateAsset(SequenceName, DirSequencePath, SequenceTemplate);
 
 		if (!NewSequence)
 		{
@@ -299,9 +302,9 @@ namespace Utility
 
 		// Import Camera
 		if (!CameraImportPath.IsEmpty()) {
-			UE_LOG(LogTemp, Log, TEXT("Import Camera Target : %s"),*CameraImportPath);
+			UE_LOG(LogTemp, Log, TEXT("Import Camera Target : %s"), *CameraImportPath);
 
-			FGuid CameraGuid = GetCameraGuidByName(NewSequenceAsset,TEXT("RenderCam"));
+			FGuid CameraGuid = GetCameraGuidByName(NewSequenceAsset, TEXT("RenderCam"));
 
 			if (CameraGuid.IsValid())
 			{
@@ -315,7 +318,7 @@ namespace Utility
 
 				FFBXInOutParameters OutFBXParams;
 				bool bIsReadey = MovieSceneToolHelpers::ReadyFBXForImport(CameraImportPath, ImportSettings, OutFBXParams);
-				
+
 				if (bIsReadey) {
 					UE_LOG(LogTemp, Log, TEXT("ReadyFBXForImport"));
 
@@ -331,7 +334,7 @@ namespace Utility
 
 					else
 					{
-						UE_LOG(LogTemp, Log, TEXT("World is ready : %s"),*(World->GetMapName()));
+						UE_LOG(LogTemp, Log, TEXT("World is ready : %s"), *(World->GetMapName()));
 
 					}
 
@@ -381,8 +384,46 @@ namespace Utility
 
 
 
-		
+
+}
+
+namespace DebugHeader
+{
+
+	static void Print(const FString& Message, const FColor& Color = FColor::White)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, Color, Message);
+		}
 	}
 
+	static void PrintLog(const FString& Message)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message)
 
-	
+	}
+
+	static EAppReturnType::Type ShowMsgDialog(EAppMsgType::Type MsgType, const FString& Message, bool bShowMsgAsWarning = true)
+	{
+		if (bShowMsgAsWarning == true) {
+			return FMessageDialog::Open(MsgType, FText::FromString(Message), FText::FromString(TEXT("Warning")));
+
+		}
+		else
+		{
+			return FMessageDialog::Open(MsgType, FText::FromString(Message));
+		}
+	}
+
+	static void ShowNotifyInfo(const FString& Message)
+	{
+		FNotificationInfo NotifyInfo(FText::FromString(Message));
+		NotifyInfo.bUseLargeFont = true;
+		NotifyInfo.FadeOutDuration = 7.f;
+
+		FSlateNotificationManager::Get().AddNotification(NotifyInfo);
+	}
+
+}
+
